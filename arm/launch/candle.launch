@@ -1,0 +1,10 @@
+<launch>
+  <node
+    name="candle_node"
+    pkg="arm"
+    type="candle_node.py"
+    output="screen"
+    ns="candle">
+  </node>
+
+</launch>

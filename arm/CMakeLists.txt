@@ -82,6 +82,7 @@ catkin_install_python(PROGRAMS
    nodes/mover.py
    nodes/arm_tutorial.py
    nodes/show_off.py
+   nodes/candle_node.py
    tests/test_collision.test
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
