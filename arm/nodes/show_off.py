@@ -16,6 +16,7 @@ from moveit_commander.conversions import pose_to_list, list_to_pose
 from arm_move.srv import step_srv,step_srvResponse,step_srvRequest
 import tf2_ros
 # from Myscene import MySceneMoveIt
+from my_robot_common.import_me_if_you_can import say_it_works
 
 
 """ NODE RobotPX, robot: px100
