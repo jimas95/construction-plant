@@ -3,7 +3,7 @@
 
 # ************************************ functions handling scene objects  *************************************
 import geometry_msgs.msg
-
+import rospy
 
 class MySceneMoveIt():
 
@@ -15,10 +15,15 @@ class MySceneMoveIt():
     create my world
     load waypoints
     """
-    def __init__(self,moveit_commander):
+    def __init__(self,scene_,robot,eef_link):
 
         self.robot_name = "px100"
-        self.scene = moveit_commander.PlanningSceneInterface()
+        self.scene = scene_
+        self.candle_pos = [ -0.028,
+                            -0.191,
+                             0.010]
+        self.eef_link = eef_link
+        self.robot = robot
         self.create_my_scene()
 
     """
@@ -27,17 +32,14 @@ class MySceneMoveIt():
     """
 
     def create_my_scene(self):  
-        if(self.object_exists("table")):
-            self.remove_obj("table")
-
-        if(self.object_exists("tower")):
-            self.remove_obj("tower")
-
+        self.scene.clear()
+        rospy.sleep(2)
         table_position = [0,0,0]
         self.add_leg([-0.15,0,0],0.5,"tower")
         self.add_leg([-0.15,0,0],0.5,"tower")
         self.add_table(width=1.0,height=1.0,position=table_position,name="table")
         self.add_obstacle()    
+        self.add_graspObject()
 
     """
     add a "table" at out scene 
@@ -79,14 +81,31 @@ class MySceneMoveIt():
         box_pose = geometry_msgs.msg.PoseStamped()
         box_pose.header.frame_id = self.robot_name + "/base_link"
         box_pose.pose.orientation.w = 1.0
-        box_pose.pose.position.x = 0.2
-        box_pose.pose.position.y = -0.12
-        box_pose.pose.position.z = -0.25 + 0.1
+        box_pose.pose.position.x = self.candle_pos[0]
+        box_pose.pose.position.y = self.candle_pos[1]
+        box_pose.pose.position.z = self.candle_pos[2]
         self.box_name = "graspObject"
-        self.scene.add_box(self.box_name, box_pose, size=(0.025, 0.025, 0.1))
-
+        self.scene.add_box(self.box_name, box_pose, size=(0.02, 0.02, 0.02))
+        # self.scene.addCylinder(self.box_name,0.1,0.1,0.5,0.5,0.5,wait=True)
         if(not self.wait_for_state_update(objName = self.box_name, box_is_known=True, timeout=10)):
             rospy.logerr("ERROR ADDING OBJECT --> "+ self.box_name)
+
+    def set_candle_pos(self,pos):
+        
+        # update candle pos 
+        self.candle_pos = pos 
+
+        #remove if exists candle
+
+        # for name in self.scene.getKnownCollisionObjects():
+        #     if(name=="graspObject"):
+        #         self.scene.removeCollisionObject(name, False)
+        # for name in self.scene.getKnownAttachedObjects():
+        #     if(name=="graspObject"):
+        #         self.scene.removeAttachedObject(name, False)
+
+        # add new candle
+        self.add_graspObject()
 
     """
     add realSense sense object(box) as an obstacle
@@ -159,4 +178,3 @@ class MySceneMoveIt():
     def object_exists(self,obj_name):
         is_known = obj_name in self.scene.get_known_object_names()
         return is_known
-
