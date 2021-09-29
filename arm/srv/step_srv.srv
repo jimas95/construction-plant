@@ -1,0 +1,4 @@
+geometry_msgs/Pose pose
+bool gripper
+---
+moveit_msgs/MoveItErrorCodes ErrorCode

@@ -1,0 +1,109 @@
+#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+import unittest
+from time import sleep
+import rostest
+from std_srvs.srv import SetBool,SetBoolRequest,SetBoolResponse
+from arm_move.srv import step_srv,step_srvResponse,step_srvRequest
+from geometry_msgs.msg import Pose
+
+"""
+this class is run by the catkin_make run_tests 
+It does 2 seperate tests :
+    test_step_UnvalidPath
+    test_step_validPath
+"""
+
+class TestCollision(unittest.TestCase):
+    """
+    call reset in order to set robot at home position
+    sets a position for the eef inside the table, making it an unvalid path
+    then calls the step service which should return -1 --> was not succefull to find a path
+    we do this in order to check that the algorithm implements collision avoidence
+    """
+    def test_step_UnvalidPath(self):
+        #init node 
+        sleep(6)
+        rospy.init_node("test")
+
+        # create service caller
+        srv = rospy.ServiceProxy("/px100/step", step_srv)
+        srv_reset = rospy.ServiceProxy("/px100/reset", SetBool)
+
+
+        #input msg step
+        msgR = SetBoolRequest()
+        msgR.data = False
+        # call step reset
+        responce = srv_reset.call(msgR)
+
+        #create position point 
+        point = Pose()
+        point.position.x = -0.019530637158030623
+        point.position.y = 0.1438018126739689
+        point.position.z = -0.016214677971962063
+        point.orientation.x = -0.5083722252857794
+        point.orientation.y =  0.44399427825272647
+        point.orientation.z =  0.5557410088722311
+        point.orientation.w = 0.48536449447245317
+
+        #input msg
+        msg = step_srvRequest()
+        msg.gripper = False
+        msg.pose = point
+
+        responce = srv.call(msg)
+   
+        result = False
+        if(responce.ErrorCode.val==-1):
+            result = True
+        self.assertTrue(result)
+
+    """
+    call reset in order to set robot at home position
+    sets a position for the eef that is valid
+    then calls the step service which should return 1 --> succefull to find a path
+    we do this in order to check that the algorithm is able to find and execute a simple plan
+    """
+    def test_step_validPath(self):
+        #init node 
+        rospy.init_node("test")
+        # create service caller
+        srv = rospy.ServiceProxy("/px100/step", step_srv)
+        srv_reset = rospy.ServiceProxy("/px100/reset", SetBool)
+
+
+        #input msg reset
+        msgR = SetBoolRequest()
+        msgR.data = False
+        # call step reset
+        responce = srv_reset.call(msgR)
+
+        #create position point 
+        point = Pose()
+        point.position.x = -0.03345255525340866
+        point.position.y =0.20007212634992672
+        point.position.z = 0.07620500840517119
+        point.orientation.x =-0.23327588256691523
+        point.orientation.y = 0.1975099080472931
+        point.orientation.z = 0.7266628798463037
+        point.orientation.w =0.6152505651271302
+
+        #input msg
+        msg = step_srvRequest()
+        msg.gripper = False
+        msg.pose = point
+
+        responce = srv.call(msg)
+        result = False
+        if(responce.ErrorCode.val==1):
+            result = True
+
+        srv_reset.call(msgR)
+
+        self.assertTrue(result)
+
+if __name__=='__main__':
+    rostest.rosrun("arm_move","test.py",TestCollision)

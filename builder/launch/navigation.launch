@@ -1,0 +1,21 @@
+<launch>
+
+<!-- RUS TURTLEBOT TO NAVIGATE AT A KNOWN ENVIROMENT -->
+
+
+  <!-- <arg name="robot_name"                  default="TurtleBot"/> -->
+
+
+  <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_world.launch">
+    <arg name="model"                value="burger"/>
+  </include>
+
+  <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
+    <arg name="map_file"                value="$(find builder)/maps/map.yaml"/>
+  </include>
+
+  <!-- <include file="$(find turtlebot3_teleop)/launch/turtlebot3_teleop_key.launch">
+    <arg name="model"                value="burger"/>
+  </include> -->
+</launch>
+

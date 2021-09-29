@@ -1,0 +1,22 @@
+<launch>
+  
+  <arg name="robot_name"                  default="px100"/>
+  <arg name="use_node"                    default="true"/>
+  
+  
+  <rosparam command="load" file="$(find arm_move)/config/waypoints.yaml"/>
+    
+  <node if="$(arg use_node)"
+    name="RobotPX"
+    pkg="arm"
+    type="show_off.py"
+    respawn="true"
+    output="screen"
+    ns="$(arg robot_name)">
+    <param name="robot_name" value="$(arg robot_name)"/>
+    <param name="dof" value="4"/>
+    <remap from="/attached_collision_object" to="/$(arg robot_name)/attached_collision_object"/>
+    <remap from="/collision_object" to="/$(arg robot_name)/collision_object"/>
+  </node>
+
+</launch>

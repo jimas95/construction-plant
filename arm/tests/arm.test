@@ -1,0 +1,12 @@
+<launch>
+
+
+
+
+  <include file="$(find arm_move)/launch/arm_box.launch">
+    <arg name="robot_name"                value="px100"/>
+    <arg name="use_fake"                  value="True"/>
+  </include>
+<test test-name="test_talker" pkg="arm_move" type="test_collision.test"/>
+
+</launch>
