@@ -35,7 +35,7 @@ catkin_python_setup()
 add_service_files(
    FILES
    step_srv.srv
-
+   get_eef_goal.srv
  )
 
 
@@ -83,6 +83,7 @@ catkin_install_python(PROGRAMS
    nodes/arm_tutorial.py
    nodes/show_off.py
    nodes/candle_node.py
+   nodes/pick_and_place.py
    tests/test_collision.test
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
