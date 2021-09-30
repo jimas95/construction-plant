@@ -1,24 +1,33 @@
 #!/usr/bin/env python
 
 import random
+import re
 import rospy
 from tf.transformations import quaternion_from_euler
 from math import pi,cos,sin
 from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
-
+from geometry_msgs.msg import Vector3,Pose,Point, Quaternion
+from std_msgs.msg import ColorRGBA
 
 class CANDLE():
 
 
     def __init__(self):
 
-        self.candle_size = {"r":0.03,"l":0.01}
-        self.arrow_size =  {"w":0.01,"l":0.1}
+        self.candle_size = Vector3(x=0.035,y=0.035,z=0.01)  # x,y diameter z  height
+        self.arrow_size  = Vector3(x=0.025,y=0.01,z=0.01)    # x  length   y,z size
+
+        self.colorBlue     = ColorRGBA(r=0.0,g=0.0,b=1.0,a=1.0) # Blue 
+        self.colorRed      = ColorRGBA(r=1.0,g=0.0,b=0.0,a=1.0) # Red
+        self.colorYellow   = ColorRGBA(r=1.0,g=1.0,b=0.0,a=1.0) # Yellow
+        self.colorGreen    = ColorRGBA(r=0.0,g=1.0,b=0.0,a=1.0) # Green
+
+
         self.polar = {"r":1,"th":0}
-        self.pose_cartesian = {"x":0,"y":0,"z":0,"roll":0,"pith":0,"yaw":0}
-        self.pose = [] 
-        self.quad = quaternion_from_euler(1.5707, 0, -1.5707)
+        self.offset_grasp = [-0.05,0.05]
+        self.offset_pregrasp = [-0.1,0.1]
+
 
         topic = 'candle_marker_array'
         self.publisher = rospy.Publisher(topic, MarkerArray,queue_size=10)
@@ -27,129 +36,78 @@ class CANDLE():
         self.markerArray.markers.append(Marker())
         self.markerArray.markers.append(Marker())
         self.markerArray.markers.append(Marker())
-        self.count = 0
-        self.MARKERS_MAX = 10
-
+        self.markerType = {"CYLINDER": 3, "ARROW":0}
+        
 
     def new_candle(self):
         rospy.logdebug("CANDLE--> creating new Candle position")
         self.random_pose()
-        self.visualize_candle()
-        self.visualize_pregrasp()
-        self.visualize_grasp()
         self.publish_visualize()      
         
 
     def random_pose(self):
         # self.polar['r'] = random.random()/2.0
-        self.polar['th'] = 2*pi*random.random()
-        self.update_numbers()
+        self.polar['theta'] = 2*pi*random.random()
+        
 
-    def update_numbers(self):
-        self.pose_cartesian['x']    = self.polar['r']*cos(self.polar['th'])
-        self.pose_cartesian['y']    = self.polar['r']*sin(self.polar['th'])
-        self.pose_cartesian['z']    = self.candle_size['l']/2.0
-        self.pose_cartesian['roll'] = 0
-        self.pose_cartesian['pitch']= 0 # this should be the grasping direction of the gripper
-        self.pose_cartesian['yaw']  = self.polar['th'] #this should be the direction the robot looks at
+    def get_candle_point(self,offset):
+        x  = (self.polar['r']+offset[0])*cos(self.polar['theta'])
+        y  = (self.polar['r']+offset[0])*sin(self.polar['theta'])
+        z  = self.candle_size.z/2.0 + +offset[1]
+        point = Point(x=x,y=y,z=z)
+        return point
 
-    def visualize_candle(self):
-
+    def add_marker(self,type,size,color,pose,id):
         marker = Marker()
         marker.header.frame_id = "world"
-        marker.type = marker.CYLINDER
+        marker.type = type
         marker.action = marker.ADD
-        marker.scale.x = self.candle_size['r']*2
-        marker.scale.y = self.candle_size['r']*2
-        marker.scale.z = self.candle_size['l']
-        marker.color.a = 1.0
-        marker.color.r = 1.0
-        marker.color.g = 1.0
-        marker.color.b = 0.0
-        marker.pose.orientation.w = 1.0
-        marker.pose.position.x = self.pose_cartesian['x']
-        marker.pose.position.y = self.pose_cartesian['y']
-        marker.pose.position.z = self.pose_cartesian['z']
-        marker.id = 0
-
-        # We add the new marker to the MarkerArray, removing the oldest
-        # marker from it when necessary
-        # if(self.count > self.MARKERS_MAX):
-            # self.markerArray.markers.pop(0)
-
-        # self.markerArray.markers.append(marker)
-        self.markerArray.markers[0] = marker
-        self.publish_visualize()
-
-    def visualize_pregrasp(self):
-        marker = Marker()
-        marker.header.frame_id = "world"
-        marker.type = marker.ARROW
-        marker.action = marker.ADD
-        marker.scale.x = self.arrow_size['l']
-        marker.scale.y = self.arrow_size['w']
-        marker.scale.z = self.arrow_size['w']
-        marker.color.a = 1.0
-        marker.color.r = 0.0
-        marker.color.g = 0.0
-        marker.color.b = 1.0
-        marker.pose.orientation.x = quaternion_from_euler(0, 0, self.pose_cartesian['yaw'])[0]
-        marker.pose.orientation.y = quaternion_from_euler(0, 0, self.pose_cartesian['yaw'])[1]
-        marker.pose.orientation.z = quaternion_from_euler(0, 0, self.pose_cartesian['yaw'])[2]
-        marker.pose.orientation.w = quaternion_from_euler(0, 0, self.pose_cartesian['yaw'])[3]
-        marker.pose.position.x = self.pose_cartesian['x']
-        marker.pose.position.y = self.pose_cartesian['y']
-        marker.pose.position.z = self.pose_cartesian['z'] + 0.02
-        marker.id = 1
-
-        self.markerArray.markers[1] = marker
-        self.count += 1
-
-    def visualize_grasp(self):
-        marker = Marker()
-        marker.header.frame_id = "world"
-        marker.type = marker.ARROW
-        marker.action = marker.ADD
-        marker.scale.x = self.arrow_size['l']
-        marker.scale.y = self.arrow_size['w']
-        marker.scale.z = self.arrow_size['w']
-        marker.color.a = 1.0
-        marker.color.r = 1.0
-        marker.color.g = 0.0
-        marker.color.b = 0.0
-        marker.pose.orientation.x = quaternion_from_euler(0, pi/4, self.pose_cartesian['yaw'])[0]
-        marker.pose.orientation.y = quaternion_from_euler(0, pi/4, self.pose_cartesian['yaw'])[1]
-        marker.pose.orientation.z = quaternion_from_euler(0, pi/4, self.pose_cartesian['yaw'])[2]
-        marker.pose.orientation.w = quaternion_from_euler(0, pi/4, self.pose_cartesian['yaw'])[3]
-        marker.pose.position.x = self.pose_cartesian['x']
-        marker.pose.position.y = self.pose_cartesian['y']
-        marker.pose.position.z = self.pose_cartesian['z']
-        marker.id = 2
-        # We add the new marker to the MarkerArray, removing the oldest
-        # marker from it when necessary
-        # if(self.count > self.MARKERS_MAX):
-            # self.markerArray.markers.pop(0)
-
-        # self.markerArray.markers.append(marker)
-        self.markerArray.markers[2] = marker
-
-        # Renumber the marker IDs
-        # id = 0
-        # for m in self.markerArray.markers:
-        #     m.id = id
-        #     id += 1
-        self.count += 1
-        self.publish_visualize()
+        marker.scale = size
+        marker.color = color
+        marker.pose = pose 
+        marker.id = id
+        self.markerArray.markers[id] = marker    
 
     def publish_visualize(self):
+        # add candle marker
+        self.add_marker(    type=self.markerType['CYLINDER'],
+                            size=self.candle_size,
+                            color=self.colorYellow,
+                            pose=self.get_candle_pose(),
+                            id=0)
+        # add grasp pose arrow
+        self.add_marker(    type=self.markerType['ARROW'],
+                            size=self.arrow_size,
+                            color=self.colorBlue,
+                            pose=self.get_grasp_pose(),
+                            id=1)
+        # add pre grasp pose arrow
+        self.add_marker(    type=self.markerType['ARROW'],
+                            size=self.arrow_size,
+                            color=self.colorRed,
+                            pose=self.get_pregrasp_pose(),
+                            id=2)
+
+
         # Publish the MarkerArray
         self.publisher.publish(self.markerArray)
 
-    def get_pose(self):
-        return self.pose
 
-    def print_coord(self):
-        pass
+    def get_candle_pose(self):
+        return self.get_pose(offset=[0,0],euler=[0,0,0])
 
+    def get_grasp_pose(self):
+        direction = [0, pi/4, self.polar['theta']]
+        return self.get_pose(offset=self.offset_grasp,euler=direction)
 
+    def get_pregrasp_pose(self):
+        direction = [0, pi/4, self.polar['theta']]
+        return self.get_pose(offset=self.offset_pregrasp,euler=direction)
+
+    def get_pose(self,offset,euler):
+        pos = self.get_candle_point(offset)
+        quad = quaternion_from_euler(euler[0],euler[1],euler[2])
+        ori = Quaternion(x=quad[0],y=quad[1],z=quad[2],w=quad[3])
+        pose = Pose(position = pos, orientation=ori)
+        return pose
 
