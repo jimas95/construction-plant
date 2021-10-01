@@ -112,25 +112,41 @@ class RobotPX():
 
 
     def pick_and_place(self):
-        self.pick()
-        self.place()
+
+        self.pick(self.get_eef_goal_pick())
+        self.place(self.get_eef_goal_place())
+
+        self.pick(self.get_eef_goal_place())
+        self.place(self.get_eef_goal_pick())
 
 
-    def pick(self):
+    def pick(self,poses):
 
-        poses = self.get_eef_goal_pick()
+        rospy.logdebug("PICK AND PLACE ==> GO TO PREGRASP")        
         self.go_to(poses.pregrasp)
+
+        rospy.logdebug("PICK AND PLACE ==> GO TO GRASP")
         self.go_to(poses.grasp)
+        
+        rospy.logdebug("PICK AND PLACE ==> CLOSE GRIPPER")
         self.close_gripper()
+        
+        rospy.logdebug("PICK AND PLACE ==> GO TO PREGRASP")
         self.go_to(poses.pregrasp)
 
 
-    def place(self):
+    def place(self,poses):
 
-        poses = self.get_eef_goal_place()
+        rospy.logdebug("PICK AND PLACE ==> GO TO PRE PLACE")
         self.go_to(poses.pregrasp)
+
+        rospy.logdebug("PICK AND PLACE ==> GO TO PLACE")
         self.go_to(poses.grasp)
+
+        rospy.logdebug("PICK AND PLACE ==> OPEN GRIPPER")
         self.open_gripper()
+
+        rospy.logdebug("PICK AND PLACE ==> GO TO PRE PLACE")
         self.go_to(poses.pregrasp)
 
 

@@ -9,12 +9,8 @@
   <arg name="use_fake"                    default="true"/>
   <arg name="use_node"                    default="true"/>
 
-  <include file="$(find interbotix_moveit)/launch/interbotix_moveit.launch">
-    <arg name="robot_name"                value="$(arg robot_name)"/>
-    <arg name="arm_operating_mode"        value="$(arg arm_operating_mode)"/>
-    <arg name="arm_profile_velocity"      value="$(arg arm_profile_velocity)"/>
-    <arg name="arm_profile_acceleration"  value="$(arg arm_profile_acceleration)"/>
-    <arg name="use_pid_cntlrs"            value="$(arg use_pid_cntlrs)"/>
+  <include file="$(find interbotix_xsarm_moveit)/launch/xsarm_moveit.launch">
+    <arg name="robot_model"                value="$(arg robot_name)"/>
     <arg name="use_actual"                value="$(arg use_actual)"/>
     <arg name="use_fake"                  value="$(arg use_fake)"/>
     <arg name="dof"                       value="4"/>
