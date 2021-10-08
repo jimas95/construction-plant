@@ -3,12 +3,12 @@
 # Brief overview
 ## Package ARM
 The purpose is to control the robot px100 using MoveIt Python API.
-The project is heavily depend on MoveIt & interbotix packages. [link to intebotix git](https://github.com/Interbotix/interbotix_ros_arms/tree/master/interbotix_examples/interbotix_moveit_interface)
+The project is heavily depend on MoveIt & interbotix packages. [link to intebotix git](https://github.com/Interbotix)
 
 # Set Up
 The setup of our world is that the robot sits on top of a table that is on top of another table. In front of it there is an object that we consider as an obstacle. Right from this obstacle (in respect to the robot) there is another object. The goal is to figure out a path in order to grab the object and while avoiding our box obstacle leave the the object on the other side.
 
-![](https://github.com/ME495-EmbeddedSystems/homework-3-jimas95/blob/arm/gifs/rViz_arm.gif)
+
 
 
 # Nodes
@@ -44,4 +44,6 @@ One main launch file exists that calls everything we need.
 
 # Example 
 
-![](https://github.com/ME495-EmbeddedSystems/homework-3-jimas95/blob/arm/gifs/real_arm.gif)
+![](https://github.com/jimas95/construction-plant/blob/working_on/img/px100.gif)
+
+![](https://github.com/jimas95/construction-plant/blob/working_on/img/px100_rViz.gif)
