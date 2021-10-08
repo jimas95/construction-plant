@@ -106,6 +106,7 @@ class RobotPX():
         while not rospy.is_shutdown():
             rospy.logdebug("PICK AND PLACE--> looping!")
 
+            # self.scene.play_scene()
             self.pick_and_place()
 
             rate.sleep()
@@ -130,7 +131,8 @@ class RobotPX():
         
         rospy.logdebug("PICK AND PLACE ==> CLOSE GRIPPER")
         self.close_gripper()
-        
+        self.scene.attach_eef_candle()
+
         rospy.logdebug("PICK AND PLACE ==> GO TO PREGRASP")
         self.go_to(poses.pregrasp)
 
@@ -145,7 +147,7 @@ class RobotPX():
 
         rospy.logdebug("PICK AND PLACE ==> OPEN GRIPPER")
         self.open_gripper()
-
+        self.scene.detach_box("graspObject")
         rospy.logdebug("PICK AND PLACE ==> GO TO PRE PLACE")
         self.go_to(poses.pregrasp)
 
@@ -179,12 +181,24 @@ class RobotPX():
 
     def close_gripper(self):
         # self.scene.attach_box()
-        self.group_gripper.set_named_target("Home")
-        self.group_gripper.go(wait=True)
+        # self.group_gripper.set_named_target("Home")
+        # self.group_gripper.set
+        # self.group_gripper.go(wait=True)
+        makis = self.group_gripper.get_current_joint_values()
+        rospy.logerr(makis)
+        makis[0] = 0.03
+        makis[1] = -0.03
+        self.group_gripper.go(makis,wait=True)
+
     def open_gripper(self):
         # self.scene.detach_box("graspObject")
-        self.group_gripper.set_named_target("Open")
-        self.group_gripper.go(wait=True)
+        # self.group_gripper.set_named_target("Open")
+        # self.group_gripper.go(wait=True)
+        makis = self.group_gripper.get_current_joint_values()
+        rospy.logerr(makis)
+        makis[0] = 0.036
+        makis[1] = -0.036
+        self.group_gripper.go(makis,wait=True)
 
 
 

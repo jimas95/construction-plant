@@ -26,9 +26,9 @@ class CANDLE():
         self.colorPurple   = ColorRGBA(r=1.0,g=0.0,b=1.0,a=1.0) # Green
         
 
-        self.polar = {"r":0.2,"th":0}
-        self.offset_grasp =     [-0.05, 0.10]
-        self.offset_pregrasp =  [-0.10, 0.15]
+        self.polar = {"r":0.22,"th":0}
+        self.offset_grasp =     [-0.05, 0.028]
+        self.offset_pregrasp =  [-0.10, 0.05]
 
 
         topic = 'candle_marker_'+str(status)
@@ -53,7 +53,7 @@ class CANDLE():
 
     def random_pose(self):
         # self.polar['r'] = 0.1+random.random()*0.1
-        self.polar['theta'] = pi*(random.random()-0.5)
+        self.polar['theta'] = pi/2*(random.random()-1.0)
         
 
     def get_candle_point(self,offset):
@@ -103,11 +103,11 @@ class CANDLE():
         return self.get_pose(offset=[0,0],euler=[0,0,0])
 
     def get_grasp_pose(self):
-        direction = [0, pi/4, self.polar['theta']]
+        direction = [0, pi/2, self.polar['theta']]
         return self.get_pose(offset=self.offset_grasp,euler=direction)
 
     def get_pregrasp_pose(self):
-        direction = [0, pi/4, self.polar['theta']]
+        direction = [0, pi/2, self.polar['theta']]
         return self.get_pose(offset=self.offset_pregrasp,euler=direction)
 
     def get_pose(self,offset,euler):
