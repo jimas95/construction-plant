@@ -15,8 +15,6 @@ from std_srvs.srv import SetBool,SetBoolRequest,SetBoolResponse
 from moveit_commander.conversions import pose_to_list, list_to_pose
 from arm_move.srv import step_srv,step_srvResponse,step_srvRequest
 import tf2_ros
-# from Myscene import MySceneMoveIt
-# from arm.import_me_if_you_can import say_it_works
 from arm.Myscene import MySceneMoveIt
 
 

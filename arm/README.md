@@ -1,7 +1,8 @@
-# homework02-Dimitrios Chamzas 11/2020
 
 # Brief overview
+
 ## Package ARM
+
 The purpose is to control the robot px100 using MoveIt Python API.
 The project is heavily depend on MoveIt & interbotix packages. [link to intebotix git](https://github.com/Interbotix)
 
@@ -39,8 +40,8 @@ One main launch file exists that calls everything we need.
 
 
 ## some extra commands 
-1. torque motors on(default) : `<rosservice call /px100/torque_joints_on`
-1. torque motors off : `<rosservice call /px100/torque_joints_off`
+1. torque motors on(default) : `rosservice call /px100/torque_joints_on`
+2. torque motors off :  `rosservice call /px100/torque_joints_off`
 
 # Example 
 
