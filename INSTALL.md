@@ -7,39 +7,63 @@
 * TurtleBot3: [instructions](https://emanual.robotis.com/docs/en/platform/turtlebot3/quick-start/)
 
 
+## Install 
+
+1. Create the workspace and close the relevant packages
+  ```
+  mkdir -p ~/project_ws/src
+  cd ~/project_ws/src
+  wstool init .
+  wstool merge -t . https://github.com/jimas95/construction-plant/blob/working_on/project.rosinstall
+  wstool update -t .
+  ```
+
+2. Build the workspace
+  ```
+  cd ~/project_ws
+  catkin init
+  catkin build 
+  ```
 
 
+## Repositories:
+  ### construction-plant:
 
-repositories:
-  construction-plant:
     type: git
     url: git@github.com:jimas95/construction-plant.git
     version: main
+
   
-  interbotix_ros_core:
+  ### interbotix_ros_core:
+
     type: git
     url: https://github.com/Interbotix/interbotix_ros_core.git
     version: main
   
-  interbotix_ros_manipulators:
+  ### interbotix_ros_manipulators:
+
     type: git
     url: https://github.com/Interbotix/interbotix_ros_manipulators.git
     version: main
   
-  interbotix_ros_toolboxes:
+  ### interbotix_ros_toolboxes:
+
     type: git
     url: https://github.com/Interbotix/interbotix_ros_toolboxes.git
     version: main
 
-  DynamixelSDK:
+  ### DynamixelSDK:
+
     type: git
     url: https://github.com/ROBOTIS-GIT/DynamixelSDK.git
     version: master
-  turtlebot3_msgs:
+  ### turtlebot3_msgs:
+
     type: git
     url: https://github.com/ROBOTIS-GIT/turtlebot3_msgs.git
     version: master
-  turtlebot3:
+  ### turtlebot3:
+
     type: git
     url: https://github.com/ROBOTIS-GIT/turtlebot3.git
     version: master

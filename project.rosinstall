@@ -1,34 +1,29 @@
-repositories:
-  construction-plant:
-    type: git
-    url: git@github.com:jimas95/construction-plant.git
+- git:
+    local-name: construction-plant
+    uri: git@github.com:jimas95/construction-plant.git
     version: main
-  
-  interbotix_ros_core:
-    type: git
-    url: https://github.com/Interbotix/interbotix_ros_core.git
+- git:
+    local-name: interbotix_ros_core
+    uri: https://github.com/Interbotix/interbotix_ros_core.git
     version: main
-  
-  interbotix_ros_manipulators:
-    type: git
-    url: https://github.com/Interbotix/interbotix_ros_manipulators.git
+- git:
+    local-name: interbotix_ros_manipulators
+    uri: https://github.com/Interbotix/interbotix_ros_manipulators.git
     version: main
-  
-  interbotix_ros_toolboxes:
-    type: git
-    url: https://github.com/Interbotix/interbotix_ros_toolboxes.git
+- git:
+    local-name: interbotix_ros_toolboxes
+    uri: https://github.com/Interbotix/interbotix_ros_toolboxes.git
     version: main
-
-  DynamixelSDK:
-    type: git
-    url: https://github.com/ROBOTIS-GIT/DynamixelSDK.git
+- git:
+    local-name: DynamixelSDK
+    uri: https://github.com/ROBOTIS-GIT/DynamixelSDK.git
     version: master
-  turtlebot3_msgs:
-    type: git
-    url: https://github.com/ROBOTIS-GIT/turtlebot3_msgs.git
+- git:
+    local-name: turtlebot3_msgs
+    uri: https://github.com/ROBOTIS-GIT/turtlebot3_msgs.git
     version: master
-  turtlebot3:
-    type: git
-    url: https://github.com/ROBOTIS-GIT/turtlebot3.git
+- git:
+    local-name: turtlebot3
+    uri: https://github.com/ROBOTIS-GIT/turtlebot3.git
     version: master
-
+    
