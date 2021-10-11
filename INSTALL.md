@@ -11,11 +11,13 @@
 
 1. Create the workspace and close the relevant packages
   ```
+  download file project.rosinstall
   mkdir -p ~/project_ws/src
+  mv ./project.rosinstall ~/project_ws/src
   cd ~/project_ws/src
   wstool init .
-  wstool merge -t . https://github.com/jimas95/construction-plant/blob/working_on/project.rosinstall
-  wstool update -t .
+  wstool merge -t . ./project.rosinstall
+  wstool update
   ```
 
 2. Build the workspace
