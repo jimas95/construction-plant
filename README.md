@@ -1,6 +1,6 @@
 # construction-plant
 
-This is the final project for MS in Robotics Northwestern
+This is the final project for MS in Robotics at Northwestern
 
 ## Packages 
 
@@ -10,4 +10,4 @@ This is the final project for MS in Robotics Northwestern
 * builder: Control TurtleBot
 * brain: main package
 
-![The San Juan Mountains are beautiful!](/img/turtle.jpg "San Juan Mountains")
+![](/img/turtle.jpg "TurtleTruck")
