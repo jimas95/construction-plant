@@ -108,8 +108,8 @@ class GotoPoint():
             if distance < 0.05:
                 move_cmd.linear.x = 0
 
-            move_cmd.linear.x = 0.01
-            move_cmd.angular.z = 0.5
+            # move_cmd.linear.x = 0.01
+            # move_cmd.angular.z = 0.5
             self.last_rotation = rotation
             rospy.logdebug(f"NAVIGATION --> {move_cmd}")
             self.cmd_vel.publish(move_cmd)

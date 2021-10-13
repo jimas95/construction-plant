@@ -20,10 +20,10 @@
   </include>
 
   <!-- Use Navigation Movement -->
-  <node  if="$(arg use_navi)" ns= "turtleBuilder" pkg="builder" type="navigate.py" name="navigate"     output="screen">
+  <node  if="$(arg use_navi)" pkg="builder" type="navigate.py" name="navigate"     output="screen">
   </node>
 
-  <node  if="$(arg use_navi)" ns= "turtleBuilder" pkg="builder" type="path_plan.py" name="Path_Planning"     output="screen">
+  <node  if="$(arg use_navi)" pkg="builder" type="path_plan.py" name="Path_Planning"     output="screen">
   </node>
 
 </launch>
