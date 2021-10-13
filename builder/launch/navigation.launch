@@ -2,21 +2,28 @@
 
 <!-- TURTLEBOT TO NAVIGATE AT A KNOWN ENVIROMENT -->
 
-  <arg name="use_fake"                  default="false"/>
-  <arg name="use_real"                  default="false"/>
+  <arg name="use_fake"                  default="True" doc="use simulation turtle"/>
+  <arg name="use_real"                  default="false" doc="use use real turtle robot"/>
+  <arg name="use_loca"                  default="false" doc="use localization node "/>
+  <arg name="use_navi"                  default="false" doc="use navigation node "/>
+  <arg name="map"                       default="map_lab_floor" doc="set map name"/>
+  
+  <arg name="map_file"                  value="$(find builder)/maps/$(arg map).yaml"/>
 
   <!-- Use Gazebo -->
-  <group if="$(arg use_fake)">
-    <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_world.launch">
-      <arg name="model"                value="burger"/>
+    <include if="$(arg use_fake)" file="$(find builder)/launch/bring_up_fake.launch">
     </include>
-  </group>
 
-  <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
-    <arg name="map_file"                value="$(find builder)/maps/map_lab_floor.yaml"/>
+  <!-- Use Navigation(for localize) package -->
+  <include if="$(arg use_loca)" file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
+    <arg name="map_file"                value="$(arg map_file)"/>
   </include>
 
-  <!-- <include file="$(find turtlebot3_teleop)/launch/turtlebot3_teleop_key.launch">
-    <arg name="model"                value="burger"/>
-  </include> -->
+  <!-- Use Navigation Movement -->
+  <node  if="$(arg use_navi)" ns= "turtleBuilder" pkg="builder" type="navigate.py" name="navigate"     output="screen">
+  </node>
+
+  <node  if="$(arg use_navi)" ns= "turtleBuilder" pkg="builder" type="path_plan.py" name="Path_Planning"     output="screen">
+  </node>
+
 </launch>
