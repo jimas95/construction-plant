@@ -3,21 +3,32 @@
 <!-- USE TURTLEBOT SLAM ON GAZEBO -->
 
 
-  <!-- <arg name="robot_name"                  default="TurtleBot"/> -->
+  <arg name="use_fake"                  default="false"/>
+  <arg name="use_real"                  default="false"/>
 
+  <!-- Use Gazebo -->
+  <group if="$(arg use_fake)">
+    <include file="$(find builder)/launch/gazebo_world.launch">
+      <arg name="model"                value="burger"/>
+    </include>
+  </group>
+  
+  <group if="$(arg use_real)">
+    <include file="$(find builder)/launch/bring_up_real.launch"/>
 
-  <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_world.launch">
-    <arg name="model"                value="burger"/>
-  </include>
+  </group>
 
   <include file="$(find turtlebot3_slam)/launch/turtlebot3_slam.launch">
     <arg name="model"                value="burger"/>
-    <arg name="slam_methods"         value="gmapping"/>
+    <arg name="open_rviz"                value="true"/>
+    
   </include>
 
-  <include file="$(find turtlebot3_teleop)/launch/turtlebot3_teleop_key.launch">
+  <!-- <include file="$(find turtlebot3_teleop)/launch/turtlebot3_teleop_key.launch">
     <arg name="model"                value="burger"/>
-  </include>
+  </include> -->
+
+  <!-- Localization -->
+  <include file="$(find turtlebot3_navigation)/launch/move_base.launch" />
 
 </launch>
-

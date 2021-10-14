@@ -1,0 +1,10 @@
+place:
+  offset_grasp:
+  - -0.05
+  - 0.028
+  offset_pregrasp:
+  - -0.10
+  - 0.05
+  polar_pos:
+  - 0.22
+  - -0.2

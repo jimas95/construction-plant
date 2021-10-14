@@ -1,0 +1,33 @@
+<launch>
+  
+  <arg name="robot_name"                  default="px100"/>
+
+  <rosparam ns="$(arg robot_name)" command="load" file="$(find arm)/config/pick_pos.yaml"/>
+  <rosparam ns="$(arg robot_name)" command="load" file="$(find arm)/config/place_pos.yaml"/>
+
+
+  <node
+    name="candle_node"
+    pkg="arm"
+    type="candle_node.py"
+    output="screen"
+    ns="$(arg robot_name)">
+  </node>
+
+
+  <node
+    name="RobotPX"
+    pkg="arm"
+    type="pick_and_place.py"
+    respawn="true"
+    output="screen"
+    ns="$(arg robot_name)">
+    <param name="robot_name" value="$(arg robot_name)"/>
+    <param name="dof" value="4"/>
+    <remap from="/attached_collision_object" to="/$(arg robot_name)/attached_collision_object"/>
+    <remap from="/collision_object" to="/$(arg robot_name)/collision_object"/>
+  </node>
+
+
+
+</launch>

@@ -1,0 +1,28 @@
+<launch>
+
+  <arg name="use_actual"                  default="false"/>
+  <arg name="use_fake"                    default="true"/>
+  <arg name="use_node"                    default="true"/>
+  <arg name="use_gazebo"                  default="false"/>
+
+  <include file="$(find interbotix_xsarm_moveit)/launch/xsarm_moveit.launch">
+    <arg name="robot_model"               value="px100"/>
+    <arg name="use_actual"                value="$(arg use_actual)"/>
+    <arg name="use_fake"                  value="$(arg use_fake)"/>
+    <arg name="use_gazebo"                  value="$(arg use_gazebo)"/>
+    <arg name="dof"                       value="4"/>
+    <arg name="rviz_frame"                value="world"/>
+    <arg name="use_moveit_rviz"                value="false"/>
+  </include>
+
+    
+
+  <group if="$(arg use_node)">
+    <include file="$(find arm)/launch/pick_and_place.launch"/>
+  </group>
+
+  <!-- <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster" args="0 0 0 0 0 0 1 world map 100" /> -->
+  <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster" args="0 0 0 0 0 0 1 world odom 100" />
+
+
+</launch>

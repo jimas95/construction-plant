@@ -1,0 +1,29 @@
+- git:
+    local-name: construction-plant
+    uri: git@github.com:jimas95/construction-plant.git
+    version: main
+- git:
+    local-name: interbotix_ros_core
+    uri: https://github.com/Interbotix/interbotix_ros_core.git
+    version: main
+- git:
+    local-name: interbotix_ros_manipulators
+    uri: https://github.com/Interbotix/interbotix_ros_manipulators.git
+    version: main
+- git:
+    local-name: interbotix_ros_toolboxes
+    uri: https://github.com/Interbotix/interbotix_ros_toolboxes.git
+    version: main
+- git:
+    local-name: DynamixelSDK
+    uri: https://github.com/ROBOTIS-GIT/DynamixelSDK.git
+    version: master
+- git:
+    local-name: turtlebot3_msgs
+    uri: https://github.com/ROBOTIS-GIT/turtlebot3_msgs.git
+    version: master
+- git:
+    local-name: turtlebot3
+    uri: https://github.com/ROBOTIS-GIT/turtlebot3.git
+    version: master
+    

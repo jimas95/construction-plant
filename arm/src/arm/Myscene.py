@@ -4,16 +4,17 @@
 # ************************************ functions handling scene objects  *************************************
 import geometry_msgs.msg
 import rospy
+import time
+from tf.transformations import quaternion_from_euler
+from geometry_msgs.msg import Quaternion
+from math import pi
 
 class MySceneMoveIt():
 
     """
-    Init of class robot px100
-    initialize/setup robot control 
-    create RobotCommander,PlanningSceneInterface,MoveGroupCommander(robot & gripper)
-    create services 
+    Init of class scene for px100
+    create PlanningSceneInterface
     create my world
-    load waypoints
     """
     def __init__(self,scene_,robot,eef_link):
 
@@ -28,7 +29,6 @@ class MySceneMoveIt():
 
     """
     create our scene setup 
-    2 tables table2 is on table1 each table has its own legs
     """
 
     def create_my_scene(self):  
@@ -50,7 +50,7 @@ class MySceneMoveIt():
         box_pose.pose.orientation.w = 1.0
         box_pose.pose.position.x = position[0]
         box_pose.pose.position.y = position[1]
-        box_pose.pose.position.z = position[2] - 0.05/2
+        box_pose.pose.position.z = position[2] - 0.05/2 - 0.01
         self.scene.add_box(name, box_pose, size=(width, height, 0.05))
 
         rospy.loginfo("ADDING OBJECT --> "+ name)
@@ -77,16 +77,18 @@ class MySceneMoveIt():
     """
     add a box that will be our grasping object at the scene
     """
-    def add_graspObject(self):
+    def add_graspObject(self, frame_id = "/base_link"):
+
+        quad = quaternion_from_euler(0,pi/2.0,0)
+        
         box_pose = geometry_msgs.msg.PoseStamped()
-        box_pose.header.frame_id = self.robot_name + "/base_link"
-        box_pose.pose.orientation.w = 1.0
+        box_pose.header.frame_id = self.robot_name + frame_id
+        box_pose.pose.orientation = Quaternion(x=quad[0],y=quad[1],z=quad[2],w=quad[3])
         box_pose.pose.position.x = self.candle_pos[0]
         box_pose.pose.position.y = self.candle_pos[1]
         box_pose.pose.position.z = self.candle_pos[2]
         self.box_name = "graspObject"
-        self.scene.add_box(self.box_name, box_pose, size=(0.02, 0.02, 0.02))
-        # self.scene.addCylinder(self.box_name,0.1,0.1,0.5,0.5,0.5,wait=True)
+        self.scene.add_cylinder(self.box_name,box_pose,height= 0.01,radius=0.035/2.0)
         if(not self.wait_for_state_update(objName = self.box_name, box_is_known=True, timeout=10)):
             rospy.logerr("ERROR ADDING OBJECT --> "+ self.box_name)
 
@@ -108,7 +110,7 @@ class MySceneMoveIt():
         self.add_graspObject()
 
     """
-    add realSense sense object(box) as an obstacle
+    add turtleBuilder object(box) as an obstacle
     """
     def add_obstacle(self):
         box_pose = geometry_msgs.msg.PoseStamped()
@@ -158,6 +160,20 @@ class MySceneMoveIt():
         self.scene.attach_box(self.eef_link, "graspObject", touch_links=touch_links)
         return self.wait_for_state_update(objName="graspObject",box_is_attached=True, box_is_known=False, timeout=4)
 
+    def attach_eef_candle(self):
+
+        # obj exists ? 
+        if(self.object_exists("graspObject")):
+            # delete candle
+            self.remove_obj("graspObject")
+        
+        # create new candle at eef position
+        self.candle_pos=[0,0,0]
+        self.add_graspObject(frame_id="/ee_gripper_link")
+
+        # attach it 
+        self.attach_box()
+
     """
     detach object named obj_name from eeo
     """
@@ -177,4 +193,5 @@ class MySceneMoveIt():
     """
     def object_exists(self,obj_name):
         is_known = obj_name in self.scene.get_known_object_names()
+        rospy.logdebug("MYSCENE ==> object exists!")
         return is_known

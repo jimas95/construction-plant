@@ -13,7 +13,7 @@ from std_msgs.msg import String
 from std_srvs.srv import Trigger,TriggerResponse,TriggerRequest,Empty,EmptyRequest,EmptyResponse
 from std_srvs.srv import SetBool,SetBoolRequest,SetBoolResponse
 from moveit_commander.conversions import pose_to_list, list_to_pose
-from arm_move.srv import step_srv,step_srvResponse,step_srvRequest
+from arm.srv import step_srv,step_srvResponse,step_srvRequest
 import tf2_ros
 from arm.Myscene import MySceneMoveIt
 from arm.srv import get_eef_goal,get_eef_goalResponse,get_eef_goalRequest
@@ -89,11 +89,14 @@ class RobotPX():
         self.eef_link = eef_link
         self.group_names = group_names
 
+        # joint state values of gripper open/close 
+        self.gripper_state_open = [0.03,-0.03]   
+        self.gripper_state_close = [0.036,-0.036] 
 
-        rospy.wait_for_service('/candle/get_eef_goal_pick')
-        rospy.wait_for_service('/candle/get_eef_goal_place')
-        self.get_eef_goal_pick  = rospy.ServiceProxy('/candle/get_eef_goal_pick' , get_eef_goal)
-        self.get_eef_goal_place = rospy.ServiceProxy('/candle/get_eef_goal_place', get_eef_goal)
+        rospy.wait_for_service('get_eef_goal_pick')
+        rospy.wait_for_service('get_eef_goal_place')
+        self.get_eef_goal_pick  = rospy.ServiceProxy('get_eef_goal_pick' , get_eef_goal)
+        self.get_eef_goal_place = rospy.ServiceProxy('get_eef_goal_place', get_eef_goal)
 
   
     """
@@ -106,6 +109,7 @@ class RobotPX():
         while not rospy.is_shutdown():
             rospy.logdebug("PICK AND PLACE--> looping!")
 
+            # self.scene.play_scene()
             self.pick_and_place()
 
             rate.sleep()
@@ -130,7 +134,8 @@ class RobotPX():
         
         rospy.logdebug("PICK AND PLACE ==> CLOSE GRIPPER")
         self.close_gripper()
-        
+        self.scene.attach_eef_candle()
+
         rospy.logdebug("PICK AND PLACE ==> GO TO PREGRASP")
         self.go_to(poses.pregrasp)
 
@@ -145,7 +150,7 @@ class RobotPX():
 
         rospy.logdebug("PICK AND PLACE ==> OPEN GRIPPER")
         self.open_gripper()
-
+        self.scene.detach_box("graspObject")
         rospy.logdebug("PICK AND PLACE ==> GO TO PRE PLACE")
         self.go_to(poses.pregrasp)
 
@@ -178,13 +183,12 @@ class RobotPX():
             rospy.logerr("PICK AND PLACE ==> Service did not process request: " + str(exc))
 
     def close_gripper(self):
-        # self.scene.attach_box()
-        self.group_gripper.set_named_target("Home")
-        self.group_gripper.go(wait=True)
+        gripper_state = self.group_gripper.get_current_joint_values()
+        self.group_gripper.go(self.gripper_state_open,wait=True)
+
     def open_gripper(self):
-        # self.scene.detach_box("graspObject")
-        self.group_gripper.set_named_target("Open")
-        self.group_gripper.go(wait=True)
+        gripper_state = self.group_gripper.get_current_joint_values()
+        self.group_gripper.go(self.gripper_state_close,wait=True)
 
 
 

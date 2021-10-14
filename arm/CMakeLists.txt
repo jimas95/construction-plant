@@ -79,9 +79,6 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
-   nodes/mover.py
-   nodes/arm_tutorial.py
-   nodes/show_off.py
    nodes/candle_node.py
    nodes/pick_and_place.py
    tests/test_collision.test
