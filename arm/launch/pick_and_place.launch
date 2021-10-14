@@ -7,7 +7,7 @@
     pkg="arm"
     type="candle_node.py"
     output="screen"
-    ns="candle">
+    ns="$(arg robot_name)">
   </node>
 
 
