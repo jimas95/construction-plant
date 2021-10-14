@@ -2,6 +2,10 @@
   
   <arg name="robot_name"                  default="px100"/>
 
+  <rosparam ns="$(arg robot_name)" command="load" file="$(find arm)/config/pick_pos.yaml"/>
+  <rosparam ns="$(arg robot_name)" command="load" file="$(find arm)/config/place_pos.yaml"/>
+
+
   <node
     name="candle_node"
     pkg="arm"

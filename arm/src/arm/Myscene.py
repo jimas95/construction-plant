@@ -12,12 +12,9 @@ from math import pi
 class MySceneMoveIt():
 
     """
-    Init of class robot px100
-    initialize/setup robot control 
-    create RobotCommander,PlanningSceneInterface,MoveGroupCommander(robot & gripper)
-    create services 
+    Init of class scene for px100
+    create PlanningSceneInterface
     create my world
-    load waypoints
     """
     def __init__(self,scene_,robot,eef_link):
 
@@ -32,7 +29,6 @@ class MySceneMoveIt():
 
     """
     create our scene setup 
-    2 tables table2 is on table1 each table has its own legs
     """
 
     def create_my_scene(self):  
@@ -88,12 +84,10 @@ class MySceneMoveIt():
         box_pose = geometry_msgs.msg.PoseStamped()
         box_pose.header.frame_id = self.robot_name + frame_id
         box_pose.pose.orientation = Quaternion(x=quad[0],y=quad[1],z=quad[2],w=quad[3])
-        # box_pose.pose.orientation.w = 1.0
         box_pose.pose.position.x = self.candle_pos[0]
         box_pose.pose.position.y = self.candle_pos[1]
         box_pose.pose.position.z = self.candle_pos[2]
         self.box_name = "graspObject"
-        # self.scene.add_box(self.box_name, box_pose, size=(0.02, 0.02, 0.02))
         self.scene.add_cylinder(self.box_name,box_pose,height= 0.01,radius=0.035/2.0)
         if(not self.wait_for_state_update(objName = self.box_name, box_is_known=True, timeout=10)):
             rospy.logerr("ERROR ADDING OBJECT --> "+ self.box_name)
@@ -116,7 +110,7 @@ class MySceneMoveIt():
         self.add_graspObject()
 
     """
-    add realSense sense object(box) as an obstacle
+    add turtleBuilder object(box) as an obstacle
     """
     def add_obstacle(self):
         box_pose = geometry_msgs.msg.PoseStamped()
@@ -201,11 +195,3 @@ class MySceneMoveIt():
         is_known = obj_name in self.scene.get_known_object_names()
         rospy.logdebug("MYSCENE ==> object exists!")
         return is_known
-
-
-    def play_scene(self):
-        rospy.logdebug("MYSCENE ==> ")
-        # self.attach_box()
-        self.attach_eef_candle()
-        time.sleep(0.5)
-        self.detach_box("graspObject")

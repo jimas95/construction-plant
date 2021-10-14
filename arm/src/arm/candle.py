@@ -5,8 +5,7 @@ import re
 import rospy
 from tf.transformations import quaternion_from_euler
 from math import pi,cos,sin
-from visualization_msgs.msg import Marker
-from visualization_msgs.msg import MarkerArray
+from visualization_msgs.msg import Marker,MarkerArray
 from geometry_msgs.msg import Vector3,Pose,Point, Quaternion
 from std_msgs.msg import ColorRGBA
 from arm.srv import get_eef_goal,get_eef_goalResponse,get_eef_goalRequest
@@ -25,8 +24,8 @@ class CANDLE():
         self.colorGreen    = ColorRGBA(r=0.0,g=1.0,b=0.0,a=1.0) # Green
         self.colorPurple   = ColorRGBA(r=1.0,g=0.0,b=1.0,a=1.0) # Green
         
-
-        self.polar = {"r":0.22,"th":0}
+        self.status = status
+        self.polar = {"r":0.22,"theta":0}
         self.offset_grasp =     [-0.05, 0.028]
         self.offset_pregrasp =  [-0.10, 0.05]
 
@@ -40,7 +39,7 @@ class CANDLE():
         self.markerArray.markers.append(Marker())
         self.markerType = {"CYLINDER": 3, "ARROW":0}
         
-        rospy.Service('/candle/get_eef_goal_'+str(status), get_eef_goal, self.srvf_get_pose)
+        rospy.Service('get_eef_goal_'+str(status), get_eef_goal, self.srvf_get_pose)
 
         self.colorCandle = self.colorYellow
         if (status=="place"): self.colorCandle = self.colorPurple
@@ -49,7 +48,13 @@ class CANDLE():
         rospy.logdebug("CANDLE--> creating new Candle position")
         self.random_pose()
         self.publish_visualize()      
-        
+      
+
+    def update_param(self):
+        polar = rospy.get_param(self.status+"/polar_pos")
+        self.polar = {"r":polar[0],"theta":polar[1]}
+        self.offset_grasp = rospy.get_param(self.status+"/offset_grasp")
+        self.offset_pregrasp = rospy.get_param(self.status+"/offset_pregrasp")
 
     def random_pose(self):
         # self.polar['r'] = 0.1+random.random()*0.1
@@ -75,6 +80,11 @@ class CANDLE():
         self.markerArray.markers[id] = marker    
 
     def publish_visualize(self):
+
+        # update values from parameter server
+        self.update_param()
+
+
         # add candle marker
         self.add_marker(    type=self.markerType['CYLINDER'],
                             size=self.candle_size,

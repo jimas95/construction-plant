@@ -89,11 +89,14 @@ class RobotPX():
         self.eef_link = eef_link
         self.group_names = group_names
 
+        # joint state values of gripper open/close 
+        self.gripper_state_open = [0.03,-0.03]   
+        self.gripper_state_close = [0.036,-0.036] 
 
-        rospy.wait_for_service('/candle/get_eef_goal_pick')
-        rospy.wait_for_service('/candle/get_eef_goal_place')
-        self.get_eef_goal_pick  = rospy.ServiceProxy('/candle/get_eef_goal_pick' , get_eef_goal)
-        self.get_eef_goal_place = rospy.ServiceProxy('/candle/get_eef_goal_place', get_eef_goal)
+        rospy.wait_for_service('get_eef_goal_pick')
+        rospy.wait_for_service('get_eef_goal_place')
+        self.get_eef_goal_pick  = rospy.ServiceProxy('get_eef_goal_pick' , get_eef_goal)
+        self.get_eef_goal_place = rospy.ServiceProxy('get_eef_goal_place', get_eef_goal)
 
   
     """
@@ -180,25 +183,12 @@ class RobotPX():
             rospy.logerr("PICK AND PLACE ==> Service did not process request: " + str(exc))
 
     def close_gripper(self):
-        # self.scene.attach_box()
-        # self.group_gripper.set_named_target("Home")
-        # self.group_gripper.set
-        # self.group_gripper.go(wait=True)
-        makis = self.group_gripper.get_current_joint_values()
-        rospy.logerr(makis)
-        makis[0] = 0.03
-        makis[1] = -0.03
-        self.group_gripper.go(makis,wait=True)
+        gripper_state = self.group_gripper.get_current_joint_values()
+        self.group_gripper.go(self.gripper_state_open,wait=True)
 
     def open_gripper(self):
-        # self.scene.detach_box("graspObject")
-        # self.group_gripper.set_named_target("Open")
-        # self.group_gripper.go(wait=True)
-        makis = self.group_gripper.get_current_joint_values()
-        rospy.logerr(makis)
-        makis[0] = 0.036
-        makis[1] = -0.036
-        self.group_gripper.go(makis,wait=True)
+        gripper_state = self.group_gripper.get_current_joint_values()
+        self.group_gripper.go(self.gripper_state_close,wait=True)
 
 
 
