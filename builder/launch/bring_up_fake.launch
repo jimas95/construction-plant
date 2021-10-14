@@ -15,6 +15,6 @@
     <param name="publish_frequency" type="double" value="50.0" />
   </node>
 
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find turtlebot3_fake)/rviz/turtlebot3_fake.rviz"/>
+  <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find turtlebot3_fake)/rviz/turtlebot3_fake.rviz"/> -->
 </launch>
 

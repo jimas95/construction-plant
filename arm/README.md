@@ -3,19 +3,19 @@
 
 ## Package ARM
 
-The purpose is to control the robot px100 using MoveIt Python API.
-The project is heavily depend on MoveIt & interbotix packages. [link to intebotix git](https://github.com/Interbotix)
+The purpose is to control the robot px100, Meanwhile the TurtleBuilder if free to navigate around it. pathplaning, obstacle avoidance, grasping a specific object and finaly having the ability to 'refuel' the TurtleBuilder are some of the main objectives of this package.
+
 
 # Set Up
-The setup of our world is that the robot sits on top of a table that is on top of another table. In front of it there is an object that we consider as an obstacle. Right from this obstacle (in respect to the robot) there is another object. The goal is to figure out a path in order to grab the object and while avoiding our box obstacle leave the the object on the other side.
-
-
-
+using MoveIt Python API.
+The project is heavily dependent on MoveIt & interbotix packages. [link to intebotix git](https://github.com/Interbotix)
 
 # Nodes
+1. PICK_AND_PLACE
+2. CANDLE
+3. SCENE
 
-One main node exists `<RobotPX.py>` under the `<pkg arm/nodes/mover.py>`.
-This node initialize the MoveIt APK and sets up everithing we need in order to control the robot.
+
 ## main services 
 
 
@@ -24,8 +24,8 @@ This node initialize the MoveIt APK and sets up everithing we need in order to c
 One main launch file exists that calls everything we need.
 
 ## run launch file
-1. `<roslaunch arm bring_up.launch robot_name:=px100 use_fake:=True >`, will use a fake node instead of the real one
-2. `<roslaunch arm bring_up.launch robot_name:=px100 use_actual:=True >` will use the real robot
+1. `<roslaunch arm bring_up.launch use_fake:=True >`, will use a fake node instead of the real one
+2. `<roslaunch arm bring_up.launch use_actual:=True >` will use the real robot
 
 
 

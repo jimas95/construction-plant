@@ -11,7 +11,8 @@
     <arg name="use_fake"                  value="$(arg use_fake)"/>
     <arg name="use_gazebo"                  value="$(arg use_gazebo)"/>
     <arg name="dof"                       value="4"/>
-    <arg name="rviz_frame"                value="map"/>
+    <arg name="rviz_frame"                value="world"/>
+    <arg name="use_moveit_rviz"                value="false"/>
   </include>
 
     
@@ -20,7 +21,8 @@
     <include file="$(find arm)/launch/pick_and_place.launch"/>
   </group>
 
-  <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster" args="0 0 0 0 0 0 1 world map 100" />
+  <!-- <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster" args="0 0 0 0 0 0 1 world map 100" /> -->
+  <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster" args="0 0 0 0 0 0 1 world odom 100" />
 
 
 </launch>

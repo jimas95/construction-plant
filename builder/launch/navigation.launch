@@ -2,10 +2,10 @@
 
 <!-- TURTLEBOT TO NAVIGATE AT A KNOWN ENVIROMENT -->
 
-  <arg name="use_fake"                  default="True" doc="use simulation turtle"/>
+  <arg name="use_fake"                  default="True"  doc="use simulation turtle"/>
   <arg name="use_real"                  default="false" doc="use use real turtle robot"/>
   <arg name="use_loca"                  default="false" doc="use localization node "/>
-  <arg name="use_navi"                  default="false" doc="use navigation node "/>
+  <arg name="use_navi"                  default="true"  doc="use navigation node "/>
   <arg name="map"                       default="map_lab_floor" doc="set map name"/>
   
   <arg name="map_file"                  value="$(find builder)/maps/$(arg map).yaml"/>
@@ -16,7 +16,8 @@
 
   <!-- Use Navigation(for localize) package -->
   <include if="$(arg use_loca)" file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
-    <arg name="map_file"                value="$(arg map_file)"/>
+    <arg name="map_file"                 value="$(arg map_file)"/>
+    <arg name="open_rviz"                value="false"/>
   </include>
 
   <!-- Use Navigation Movement -->
