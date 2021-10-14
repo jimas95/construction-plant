@@ -2,7 +2,6 @@
 
 
 # ************************************ functions handling scene objects  *************************************
-from inspect import FrameInfo
 import geometry_msgs.msg
 import rospy
 import time

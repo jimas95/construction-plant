@@ -13,7 +13,7 @@ from std_msgs.msg import String
 from std_srvs.srv import Trigger,TriggerResponse,TriggerRequest,Empty,EmptyRequest,EmptyResponse
 from std_srvs.srv import SetBool,SetBoolRequest,SetBoolResponse
 from moveit_commander.conversions import pose_to_list, list_to_pose
-from arm_move.srv import step_srv,step_srvResponse,step_srvRequest
+from arm.srv import step_srv,step_srvResponse,step_srvRequest
 import tf2_ros
 from arm.Myscene import MySceneMoveIt
 from arm.srv import get_eef_goal,get_eef_goalResponse,get_eef_goalRequest
