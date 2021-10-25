@@ -90,8 +90,8 @@ class RobotPX():
         self.group_names = group_names
 
         # joint state values of gripper open/close 
-        self.gripper_state_open = [0.03,-0.03]   
-        self.gripper_state_close = [0.036,-0.036] 
+        self.gripper_state_open  =  [0.035, -0.035] #[0.036,-0.036] flat candle values
+        self.gripper_state_close =  [0.018, -0.018] #[0.03,-0.03]   flat candle values
 
         rospy.wait_for_service('get_eef_goal_pick')
         rospy.wait_for_service('get_eef_goal_place')
@@ -117,11 +117,12 @@ class RobotPX():
 
     def pick_and_place(self):
 
+
         self.pick(self.get_eef_goal_pick())
         self.place(self.get_eef_goal_place())
 
-        self.pick(self.get_eef_goal_place())
-        self.place(self.get_eef_goal_pick())
+        # self.pick(self.get_eef_goal_place())
+        # self.place(self.get_eef_goal_pick())
 
 
     def pick(self,poses):
@@ -183,12 +184,10 @@ class RobotPX():
             rospy.logerr("PICK AND PLACE ==> Service did not process request: " + str(exc))
 
     def close_gripper(self):
-        gripper_state = self.group_gripper.get_current_joint_values()
-        self.group_gripper.go(self.gripper_state_open,wait=True)
+        self.group_gripper.go(self.gripper_state_close,wait=True)
 
     def open_gripper(self):
-        gripper_state = self.group_gripper.get_current_joint_values()
-        self.group_gripper.go(self.gripper_state_close,wait=True)
+        self.group_gripper.go(self.gripper_state_open,wait=True)
 
 
 

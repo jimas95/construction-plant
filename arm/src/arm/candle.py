@@ -25,9 +25,9 @@ class CANDLE():
         self.colorPurple   = ColorRGBA(r=1.0,g=0.0,b=1.0,a=1.0) # Green
         
         self.status = status
-        self.polar = {"r":0.22,"theta":0}
-        self.offset_grasp =     [-0.05, 0.028]
-        self.offset_pregrasp =  [-0.10, 0.05]
+        self.polar = {"r":0.22,"theta":0.0, 'zeta':0.0}
+        self.offset_grasp =     [-0.05, 0.028,pi/2]
+        self.offset_pregrasp =  [-0.10, 0.05 ,pi/2]
 
 
         topic = 'candle_marker_'+str(status)
@@ -52,7 +52,7 @@ class CANDLE():
 
     def update_param(self):
         polar = rospy.get_param(self.status+"/polar_pos")
-        self.polar = {"r":polar[0],"theta":polar[1]}
+        self.polar = {"r":polar[0],"theta":polar[1],'zeta':polar[2]}
         self.offset_grasp = rospy.get_param(self.status+"/offset_grasp")
         self.offset_pregrasp = rospy.get_param(self.status+"/offset_pregrasp")
 
@@ -64,7 +64,7 @@ class CANDLE():
     def get_candle_point(self,offset):
         x  = (self.polar['r']+offset[0])*cos(self.polar['theta'])
         y  = (self.polar['r']+offset[0])*sin(self.polar['theta'])
-        z  = self.candle_size.z/2.0 + +offset[1]
+        z  = self.candle_size.z/2.0 + self.polar['zeta'] + offset[1]
         point = Point(x=x,y=y,z=z)
         return point
 
@@ -83,7 +83,6 @@ class CANDLE():
 
         # update values from parameter server
         self.update_param()
-
 
         # add candle marker
         self.add_marker(    type=self.markerType['CYLINDER'],
@@ -110,14 +109,17 @@ class CANDLE():
 
 
     def get_candle_pose(self):
-        return self.get_pose(offset=[0,0],euler=[0,0,0])
+        # if(self.status=="pick"):
+        return self.get_pose(offset=[0,0],euler=[0,pi/2,self.polar['theta']+pi/2])
+
+        # return self.get_pose(offset=[0,0],euler=[0,0,0])
 
     def get_grasp_pose(self):
-        direction = [0, pi/2, self.polar['theta']]
+        direction = [0, self.offset_grasp[2], self.polar['theta']]
         return self.get_pose(offset=self.offset_grasp,euler=direction)
 
     def get_pregrasp_pose(self):
-        direction = [0, pi/2, self.polar['theta']]
+        direction = [0, self.offset_pregrasp[2], self.polar['theta']]
         return self.get_pose(offset=self.offset_pregrasp,euler=direction)
 
     def get_pose(self,offset,euler):

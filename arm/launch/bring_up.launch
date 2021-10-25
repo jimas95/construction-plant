@@ -1,18 +1,19 @@
 <launch>
 
-  <arg name="use_actual"                  default="false"/>
-  <arg name="use_fake"                    default="true"/>
-  <arg name="use_node"                    default="true"/>
-  <arg name="use_gazebo"                  default="false"/>
+  <arg name="use_real"                    default="false" doc="use uctual robotic arm PX100"/>
+  <arg name="use_fake"                    default="false" doc="use use fake node(No gazebo)"/>
+  <arg name="use_node"                    default="true"  doc="use manipulation node"/>
+  <arg name="use_gazebo"                  default="false" doc="use gazebo"/>
+  <arg name="open_rviz"                   default="false" doc="open rviz arm config"/>
 
   <include file="$(find interbotix_xsarm_moveit)/launch/xsarm_moveit.launch">
     <arg name="robot_model"               value="px100"/>
-    <arg name="use_actual"                value="$(arg use_actual)"/>
+    <arg name="use_actual"                value="$(arg use_real)"/>
     <arg name="use_fake"                  value="$(arg use_fake)"/>
-    <arg name="use_gazebo"                  value="$(arg use_gazebo)"/>
+    <arg name="use_gazebo"                value="$(arg use_gazebo)"/>
     <arg name="dof"                       value="4"/>
     <arg name="rviz_frame"                value="world"/>
-    <arg name="use_moveit_rviz"                value="false"/>
+    <arg name="use_moveit_rviz"           value="$(arg open_rviz)"/>
   </include>
 
     
@@ -22,7 +23,7 @@
   </group>
 
   <!-- <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster" args="0 0 0 0 0 0 1 world map 100" /> -->
-  <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster" args="0 0 0 0 0 0 1 world odom 100" />
+  <!-- <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster" args="0 0 0 0 0 0 1 world odom 100" /> -->
 
 
 </launch>

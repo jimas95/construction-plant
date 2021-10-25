@@ -79,7 +79,7 @@ class MySceneMoveIt():
     """
     def add_graspObject(self, frame_id = "/base_link"):
 
-        quad = quaternion_from_euler(0,pi/2.0,0)
+        quad = quaternion_from_euler(pi/2.0,0,0)
         
         box_pose = geometry_msgs.msg.PoseStamped()
         box_pose.header.frame_id = self.robot_name + frame_id
