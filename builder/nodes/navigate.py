@@ -36,8 +36,8 @@ class GotoPoint():
 
         # wait for transforms to be published
         try:
-            self.tf_listener.waitForTransform(self.odom_frame, 'base_footprint'  , rospy.Time(), rospy.Duration(2.0))
-            self.tf_listener.waitForTransform("base_footprint", 'hunt_point'     , rospy.Time(), rospy.Duration(2.0))
+            self.tf_listener.waitForTransform(self.odom_frame, 'base_footprint'  , rospy.Time(), rospy.Duration(5.0))
+            self.tf_listener.waitForTransform("base_footprint", 'hunt_point'     , rospy.Time(), rospy.Duration(5.0))
             self.base_frame = 'base_footprint'
         except (tf.Exception, tf.ConnectivityException, tf.LookupException):
             rospy.loginfo("Cannot find transform between odom and base_footprint or for hunt point")
@@ -78,10 +78,8 @@ class GotoPoint():
         # rospy.logdebug(f"NAVIGATION TRA --> {self.trans.transform}")
 
         poutsa = [self.trans.transform.rotation.x,self.trans.transform.rotation.y,self.trans.transform.rotation.z,self.trans.transform.rotation.w]
-
         rospy.logdebug(f"------ NAVIGATION ------")
         rospy.logdebug(f"NAVIGATION pou koitaw           --> {rotation*TO_DEGREE:.2f}")
-        # rospy.logdebug(f"NAVIGATION pou error error      --> {self.dir*TO_DEGREE:.2f}")
         rospy.logdebug(f"NAVIGATION pou prepei na koitaw --> {self.dir*TO_DEGREE:.2f}")
         rospy.logdebug(f"NAVIGATION pou tou lew na koita --> {euler_from_quaternion(poutsa)[2]*TO_DEGREE:.2f}")
         rospy.logdebug(f"NAVIGATION plaka me k           --> {self.trans.transform.translation.x:.2f}")
@@ -106,14 +104,21 @@ class GotoPoint():
             self.get_dir()
             self.ti_fasi()
 
+            # poutsa = [self.trans.transform.rotation.x,self.trans.transform.rotation.y,self.trans.transform.rotation.z,self.trans.transform.rotation.w]
+            # angle = euler_from_quaternion(poutsa)[2]*TO_DEGREE
+
+            # move_cmd.angular.z = -angle/10
+            # move_cmd.linear.x  = self.dist
 
 
-            # move_cmd.angular.z = 4 * atan2(self.trans.transform.translation.y, self.trans.transform.translation.x)
-            # move_cmd.linear.x = 0.5 *sqrt(trans.transform.translation.x ** 2 + trans.transform.translation.y ** 2)
-            # move_cmd.linear.x = 0.0
             # move_cmd.angular.z = 0.5
+
             move_cmd.angular.z = self.dir
-            
+            if(abs(self.dir*TO_DEGREE)<25):
+                move_cmd.linear.x = 0.1
+
+            if(self.dist<0.2):
+                move_cmd.linear.x = 0.0
 
             self.threshold_speed(move_cmd)
 

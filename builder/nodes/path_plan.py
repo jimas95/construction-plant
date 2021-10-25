@@ -38,10 +38,10 @@ class HUNT_POINT():
         self.center = {"x":0.0,"y":0} # offset of circle center
         self.rangeUPDOWN = 0.5
         self.dir = 0 
-        self.steps = 20
+        self.steps = 10
         self.step = pi/self.steps
         self.offsetDIR = pi/2
-        self.offsetDIR = 0
+        # self.offsetDIR = 0
         self.time = 0 
 
         self.huntPT = Point(x=0,y=0,z=0)
@@ -59,7 +59,7 @@ class HUNT_POINT():
 
 
         # create path plan 
-        for timeStep in range(2*self.steps):
+        for timeStep in range(2*self.steps+1):
             self.time += self.step
             self.next_hp()
             pose = self.get_pose()
@@ -81,7 +81,7 @@ class HUNT_POINT():
         # if(self.goal_reached()):
         #     self.time += self.step
 
-        # self.time += self.step
+        self.time += self.step
         self.next_hp()
 
         # send info tf, plan, arrow got hunting point
@@ -130,10 +130,6 @@ class HUNT_POINT():
         z  = 0
         point = Point(x=x,y=y,z=z)
         self.dir = self.polar['th']+self.offsetDIR
-        self.dir = 0
-        self.dir = 0
-        self.dir = 0
-        self.dir = 0
         return point
 
     """
