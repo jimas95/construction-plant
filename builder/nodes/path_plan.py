@@ -7,10 +7,16 @@ from tf.transformations import quaternion_from_euler
 from math import pi,cos,sin
 from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
-from geometry_msgs.msg import Vector3,Pose,Point, Quaternion
+from geometry_msgs.msg import Vector3,Pose,Point, Quaternion,Transform,TransformStamped,PoseStamped
 from std_msgs.msg import ColorRGBA
-from arm.srv import get_eef_goal,get_eef_goalResponse,get_eef_goalRequest
 from nav_msgs.msg import Path
+
+
+import actionlib
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+import tf_conversions
+import tf2_ros
+
 
 ARROW_SIZE  = Vector3(x=0.3,y=0.05,z=0.05)    # x  length   y,z size
 COLOR_Blue     = ColorRGBA(r=0.0,g=0.0,b=1.0,a=1.0) # Blue 
@@ -19,56 +25,135 @@ COLOR_Yellow   = ColorRGBA(r=1.0,g=1.0,b=0.0,a=1.0) # Yellow
 COLOR_Green    = ColorRGBA(r=0.0,g=1.0,b=0.0,a=1.0) # Green
 COLOR_Purple   = ColorRGBA(r=1.0,g=0.0,b=1.0,a=1.0) # Green
 
+MODE = "CIRCLE"
+# MODE = "LINE"
 
 class HUNT_POINT():
 
 
     def __init__(self):
 
-        self.polar = {"r":1.0,"th":0}
-        self.offset_grasp =     [-0.05, 0.028]
-        self.offset_pregrasp =  [-0.10, 0.05]
+        self.polar  = {"r":0.5,"th":0}
+        self.center = {"x":0.5,"y":0} # offset of circle center
+        self.center = {"x":0.0,"y":0} # offset of circle center
+        self.rangeUPDOWN = 0.5
+        self.dir = 0 
+        self.steps = 20
+        self.step = pi/self.steps
+        self.offsetDIR = pi/2
+        self.offsetDIR = 0
+        self.time = 0 
+
+        self.huntPT = Point(x=0,y=0,z=0)
 
 
-        self.publisherVis = rospy.Publisher("hunt_point_vis" , MarkerArray,queue_size=10)
-        self.publisherPose = rospy.Publisher("hunt_point_pose", Pose,queue_size=10)
+        self.publisherVis  = rospy.Publisher("hunt_point_vis" , MarkerArray,queue_size=10)
+        self.publishPath   = rospy.Publisher("hunt_point_path", Path,queue_size=10)
+        self.msg_path = Path()
+        
 
         self.markerArray = MarkerArray()
         self.markerArray.markers.append(Marker())
-        self.markerType = {"CYLINDER": 3, "ARROW":0}
+        self.markerType = {"ARROW":0}
+
+
+
+        # create path plan 
+        for timeStep in range(2*self.steps):
+            self.time += self.step
+            self.next_hp()
+            pose = self.get_pose()
+            pose_stamped = PoseStamped(pose = pose)
+            pose_stamped.header.stamp = rospy.Time.now()
+            pose_stamped.header.frame_id = "world"
+            self.msg_path.poses.append(pose_stamped)
+            self.publish_plan()
         
-        # rospy.Service('/get_eef_goal_'+str(status), get_eef_goal, self.srvf_get_pose)
+        # reset time
+        self.time = 0 
+        self.time = random.random()*2*pi
 
 
-    def random_pose(self):
-        rospy.logdebug("CANDLE--> creating new Candle position")
-        # self.polar['r'] = 0.1+random.random()*0.1
-        # self.polar['th'] = pi/2*(random.random())
-        self.polar['th'] = self.polar['th'] + pi/20
-        self.publish_visualize()      
+    """     main loop    """
+    def update(self):
+        rospy.logdebug("PATH PLAN--> update")
+
+        # if(self.goal_reached()):
+        #     self.time += self.step
+
+        # self.time += self.step
+        self.next_hp()
+
+        # send info tf, plan, arrow got hunting point
+        self.publish_visualize()    
+        self.publish_huntTF()
+        self.publish_plan()
+
+    """     calculate new hunting point    """
+    def next_hp(self):
+        # calculate new hunting point
+        if(MODE=="CIRCLE"):
+            pt = self.path_circle(self.time)
         
-    """
-    publish the global plan
-    """
-    def publish_plan(self):
-        msg = Path()
-        msg.header.frame_id = "/odom"
-        msg.header.stamp = rospy.Time.now()
-        pose = self.get_pose()
-        msg.poses.append(pose)
-        rospy.loginfo("Publishing Plan...")
-        self.waypoint_publisher.publish(msg) 
+        if(MODE=="LINE"):
+            pt = self.path_updown(self.time)
 
-    def get_candle_point(self,offset):
-        x  = (self.polar['r']+offset[0])*cos(self.polar['th'])
-        y  = (self.polar['r']+offset[0])*sin(self.polar['th'])
-        z  = 0 + offset[1]
+        #  update hunting point
+        self.huntPT = pt 
+
+
+    def get_pose(self):
+        euler=[0,0,self.dir]
+        pos = self.huntPT
+        quad = quaternion_from_euler(euler[0],euler[1],euler[2])
+        ori = Quaternion(x=quad[0],y=quad[1],z=quad[2],w=quad[3])
+        pose = Pose(position = pos, orientation=ori)
+        return pose
+
+    def get_tf(self):
+        euler=[0,0,self.dir]
+        pos_temp = self.huntPT
+        pos = Vector3(x = pos_temp.x, y = pos_temp.y, z = pos_temp.z)
+        quad = quaternion_from_euler(euler[0],euler[1],euler[2])
+        ori = Quaternion(x=quad[0],y=quad[1],z=quad[2],w=quad[3])
+        hp_tf = Transform(translation = pos, rotation=ori)
+        return hp_tf
+
+
+    """
+    equation of circle path, based on time input
+    """    
+    def path_circle(self,time):
+        self.polar['th'] = time
+        x  = (self.polar['r'])*cos(self.polar['th']) + self.center['x']
+        y  = (self.polar['r'])*sin(self.polar['th']) + self.center['y']
+        z  = 0
         point = Point(x=x,y=y,z=z)
+        self.dir = self.polar['th']+self.offsetDIR
+        self.dir = 0
+        self.dir = 0
+        self.dir = 0
+        self.dir = 0
         return point
 
+    """
+    equation of circle path, based on time input
+    """    
+    def path_updown(self,time):
+        self.polar['th'] = time
+        x  = self.center['x'] + (self.rangeUPDOWN)*cos(self.polar['th'])
+        y  = self.center['y']
+        z  = 0
+        point = Point(x=x,y=y,z=z)
+        self.dir = 0
+        return point
+
+    """
+    create arrow marker object
+    """
     def add_marker(self,type,size,color,pose,id):
         marker = Marker()
-        marker.header.frame_id = "odom"
+        marker.header.frame_id = "world"
         marker.type = type
         marker.action = marker.ADD
         marker.scale = size
@@ -77,6 +162,9 @@ class HUNT_POINT():
         marker.id = id
         self.markerArray.markers[id] = marker    
 
+    """
+    publish visualization arrow of hunting point
+    """
     def publish_visualize(self):
         # add arrown at hunt point
         self.add_marker(    type=self.markerType['ARROW'],
@@ -87,42 +175,43 @@ class HUNT_POINT():
 
         # Publish the MarkerArray
         self.publisherVis.publish(self.markerArray)
-        self.publisherPose.publish(self.get_pose())
 
-
-    def get_pose(self):
-        offset=[0,0]
-        euler=[0,0,self.polar['th']+pi/2]
-        pos = self.get_candle_point(offset)
-        quad = quaternion_from_euler(euler[0],euler[1],euler[2])
-        ori = Quaternion(x=quad[0],y=quad[1],z=quad[2],w=quad[3])
-        pose = Pose(position = pos, orientation=ori)
-        return pose
-
-
-    """Service get eef goal
-    Empty request
-    returns the geometry pose of grasp and pregrasp pos
     """
-    def srvf_get_pose(self,get_eef_goalRequest):
-        msg = get_eef_goalResponse()
-        msg.grasp = self.get_grasp_pose()
-        msg.pregrasp = self.get_pregrasp_pose()
-        return msg
+    publish the tf of the hunting point
+    """
+    def publish_huntTF(self):
+        br = tf2_ros.TransformBroadcaster()
+        t = TransformStamped()
+        t.header.stamp = rospy.Time.now()
+        t.header.frame_id = "world"
+        t.child_frame_id = "hunt_point"
+        t.transform = self.get_tf()
+        br.sendTransform(t)  
+        
+    """
+    publish the global path plan
+    """
+    def publish_plan(self):
+        self.msg_path.header.frame_id = "world"
+        self.msg_path.header.stamp = rospy.Time.now()
+        self.publishPath.publish(self.msg_path) 
+
+
+
 
 """ INIT    """
 def start():
 
     rospy.init_node('Path_Planning', log_level=rospy.DEBUG)
-    rate = rospy.Rate(1.0) # publish freacuancy 
+    rate = rospy.Rate(0.5) # publish freacuancy 
     hunt_point = HUNT_POINT()
 
     while not rospy.is_shutdown():
         rospy.logdebug("Path_Planning --> loopa")
-        hunt_point.random_pose()
-        hunt_point.publish_visualize()
+        hunt_point.update()
         rate.sleep()
 
+"""  MAIN    """
 if __name__ == '__main__':
     try:
         start() 
