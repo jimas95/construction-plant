@@ -82,7 +82,7 @@ class GotoPoint():
         rospy.logdebug(f"NAVIGATION pou koitaw           --> {rotation*TO_DEGREE:.2f}")
         rospy.logdebug(f"NAVIGATION pou prepei na koitaw --> {self.dir*TO_DEGREE:.2f}")
         rospy.logdebug(f"NAVIGATION pou tou lew na koita --> {euler_from_quaternion(poutsa)[2]*TO_DEGREE:.2f}")
-        rospy.logdebug(f"NAVIGATION plaka me k           --> {self.trans.transform.translation.x:.2f}")
+        rospy.logdebug(f"NAVIGATION target dist          --> {self.dist:.4f}")
         rospy.logdebug(f"NAVIGATION plaka me k           --> {self.trans.transform.translation.y:.2f}")
 
 
@@ -117,7 +117,7 @@ class GotoPoint():
             if(abs(self.dir*TO_DEGREE)<25):
                 move_cmd.linear.x = 0.1
 
-            if(self.dist<0.2):
+            if(self.dist<0.05):
                 move_cmd.linear.x = 0.0
 
             self.threshold_speed(move_cmd)

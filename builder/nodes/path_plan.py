@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
 import random
-import re
 import rospy
 from tf.transformations import quaternion_from_euler
-from math import pi,cos,sin
+from math import pi,cos,sin,sqrt
 from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
 from geometry_msgs.msg import Vector3,Pose,Point, Quaternion,Transform,TransformStamped,PoseStamped
@@ -57,6 +56,9 @@ class HUNT_POINT():
         self.markerType = {"ARROW":0}
 
 
+        self.tfBuffer = tf2_ros.Buffer()
+        tf2_ros.TransformListener(self.tfBuffer)
+
 
         # create path plan 
         for timeStep in range(2*self.steps+1):
@@ -73,21 +75,47 @@ class HUNT_POINT():
         self.time = 0 
         self.time = random.random()*2*pi
 
+        # send info tf, plan, arrow got hunting point
+        self.publish_visualize()    
+        self.publish_huntTF()
 
     """     main loop    """
     def update(self):
         rospy.logdebug("PATH PLAN--> update")
 
-        # if(self.goal_reached()):
-        #     self.time += self.step
+        if(self.goal_reached()):
+            self.time += self.step
 
-        self.time += self.step
+        # self.time += self.step
         self.next_hp()
 
         # send info tf, plan, arrow got hunting point
         self.publish_visualize()    
         self.publish_huntTF()
         self.publish_plan()
+
+
+    """     calculate new hunting point    """
+    def goal_reached(self):
+
+        # calc turtle dist from hunt point
+        dist = self.get_dist()
+        rospy.logdebug(f"PATH PLAN --> Turtle Dist from target {dist}")
+        self.threshold = 0.1
+        if(dist<self.threshold):
+            return True
+        
+        return False
+        
+    """     calculate distance from turtle to hunting point    """
+    def get_dist(self):
+        try:
+            trans = self.tfBuffer.lookup_transform("base_footprint", 'hunt_point', rospy.Time())
+            dist = sqrt(trans.transform.translation.x ** 2 + trans.transform.translation.y ** 2)
+            return dist
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            rospy.logerr("PATH PLAN --> PROBLEMO WITH TFS ")
+            return 1
 
     """     calculate new hunting point    """
     def next_hp(self):
@@ -199,11 +227,11 @@ class HUNT_POINT():
 def start():
 
     rospy.init_node('Path_Planning', log_level=rospy.DEBUG)
-    rate = rospy.Rate(0.5) # publish freacuancy 
+    rate = rospy.Rate(5) # publish freacuancy 
     hunt_point = HUNT_POINT()
 
     while not rospy.is_shutdown():
-        rospy.logdebug("Path_Planning --> loopa")
+        rospy.logdebug("PATH PLAN--> --> loopa")
         hunt_point.update()
         rate.sleep()
 
