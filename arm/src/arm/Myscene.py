@@ -116,11 +116,11 @@ class MySceneMoveIt():
         box_pose = geometry_msgs.msg.PoseStamped()
         box_pose.header.frame_id = self.robot_name + "/base_link"
         box_pose.pose.orientation.w = 1.0
-        box_pose.pose.position.x = 1.0
+        box_pose.pose.position.x = 0.2
         box_pose.pose.position.y = 0.0
-        box_pose.pose.position.z = 0.5
+        box_pose.pose.position.z = 0.075
         self.box_name = "obstacle"
-        self.scene.add_box(self.box_name, box_pose, size=(0.14, 0.05,0.09))
+        self.scene.add_box(self.box_name, box_pose, size=(0.14, 0.05,0.15))
 
         if(not self.wait_for_state_update(objName = self.box_name, box_is_known=True, timeout=10)):
             rospy.logerr("ERROR ADDING OBJECT --> "+ self.box_name)
