@@ -1,13 +1,13 @@
 pick:
   offset_grasp:
-  - 0.0
-  - 0.023
-  - 1.0
+  - 0.0     # x
+  - 0.023   # z
+  - 1.0     # angle
   offset_pregrasp:
-  - -0.005
-  - 0.1
-  - 1.0
+  - -0.005  # x
+  - 0.1     # z
+  - 1.0     # angle
   polar_pos:
-  - 0.2
-  - 1.57
-  - 0.02
+  - 0.2     # r
+  - 1.57    # angle
+  - 0.02    # z 
