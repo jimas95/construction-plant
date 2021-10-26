@@ -1,14 +1,20 @@
 <launch>
 
+  <arg name="use_fake"     default="false" doc ="use fake nodes"/>
+  <arg name="use_real"     default="false" doc ="use real robots!"/>
+
 
   <include file="$(find arm)/launch/bring_up.launch">
-    <arg name="use_gazebo"             value="false"/>
-    <arg name="use_fake"               value="true"/>
+    <arg name="use_fake"               value="$(arg use_fake)"/>
+    <arg name="use_real"               value="$(arg use_real)"/>
   </include>
 
-    
-  <include file="$(find builder)/launch/navigation.launch">
-    <arg name="use_fake"                  value="True"/>
+
+  <include file="$(find builder)/launch/slamming.launch">
+    <arg name="use_fake"           value="$(arg use_fake)"/>
+    <arg name="use_real"           value="$(arg use_real)"/>
+    <arg name="use_navi"           value="false"/>
+    <arg name="open_rviz"          value="false"/>
   </include>
 
   <node type="rviz" name="rviz" pkg="rviz" args="-d $(find brain)/rviz/allTogether.rviz" />
