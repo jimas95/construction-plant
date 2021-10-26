@@ -104,7 +104,7 @@ class RobotPX():
         while not rospy.is_shutdown():
             rospy.logdebug("PICK AND PLACE--> looping!")
             
-            self.refill = True
+            # self.refill = True #activate non stop movement
             if(self.refill):
                 self.pick_and_place()
                 self.refill = False
