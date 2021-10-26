@@ -29,6 +29,7 @@ TO_DEGREE = 57.2958
 
 MODE = "CIRCLE"
 MODE = "LINE"
+MODE = "REFILL"
 
 class HUNT_POINT():
 
@@ -37,13 +38,30 @@ class HUNT_POINT():
 
         self.polar  = {"r":0.2,"th":0}
         self.center = {"x":0.5,"y":0} # offset of circle center
-        self.rangeUPDOWN = 0.25
         self.dir = 0 
         self.steps = 1
         self.step = pi/self.steps
         self.offsetDIR = pi/2
         self.reverse = False
         self.time = 0 
+
+        if(MODE == "CIRCLE"):
+            self.steps = 10
+            self.step = pi/self.steps
+            self.center = {"x":0.5,"y":0} # offset of circle center
+
+
+        if(MODE == "LINE"):
+            self.steps = 1
+            self.step = pi/self.steps
+            self.center = {"x":0.6,"y":0} # offset of circle center
+            self.rangeUPDOWN = 0.15
+
+
+        if(MODE == "REFILL"):
+            self.steps = 1
+            self.step = 2.0*pi/self.steps
+            self.center = {"x":0.1,"y":0.0} # offset of circle center
 
         self.huntPT = Point(x=0,y=0,z=0)
 
@@ -81,26 +99,20 @@ class HUNT_POINT():
         self.publish_visualize()    
         self.publish_huntTF()
 
+        self.setReverseMode(self.reverse)
+
+
     """     main loop    """
     def update(self):
         rospy.logdebug("PATH PLAN--> update")
 
         if(self.goal_reached()):
             self.time += self.step
-            self.reverse = not self.reverse
-            self.setReverseMode(self.reverse)
-            # every pi switch reverse mode ( for LINE PATH)
-            # rospy.logerr(f" condition --> {int(self.time/(pi/2))} {int((self.time-self.step)/(pi/2))}")
-            # rospy.logerr(f" angle --> {self.time*TO_DEGREE}")
-            # if(int(self.time/(pi))>int((self.time-self.step-0.0001)/(pi))):
-            #     rospy.logerr("oeoeoeoeo")
-            #     rospy.logerr("oeoeoeoeo")
-            #     rospy.logerr("oeoeoeoeo")
-            #     rospy.logerr("oeoeoeoeo")
-            #     self.setReverseMode(self.reverse)
-            #     self.reverse = not self.reverse
+            if(MODE == "LINE"):
+                self.reverse = not self.reverse
+                self.setReverseMode(self.reverse)
 
-        # self.time += self.step
+
         self.next_hp()
 
         # send info tf, plan, arrow got hunting point
@@ -139,6 +151,10 @@ class HUNT_POINT():
         
         if(MODE=="LINE"):
             pt = self.path_updown(self.time)
+        
+        
+        if(MODE=="REFILL"):
+            pt = Point(x=0.235,y=0,z=0)
 
         #  update hunting point
         self.huntPT = pt 
