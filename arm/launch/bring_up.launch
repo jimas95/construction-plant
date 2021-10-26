@@ -22,8 +22,4 @@
     <include file="$(find arm)/launch/pick_and_place.launch"/>
   </group>
 
-  <!-- <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster" args="0 0 0 0 0 0 1 world map 100" /> -->
-  <!-- <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster" args="0 0 0 0 0 0 1 world odom 100" /> -->
-
-
 </launch>
