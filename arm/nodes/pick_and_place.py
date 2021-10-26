@@ -18,21 +18,11 @@ import tf2_ros
 from arm.Myscene import MySceneMoveIt
 from arm.srv import get_eef_goal,get_eef_goalResponse,get_eef_goalRequest
 import time
+from std_srvs.srv import Empty,EmptyRequest,EmptyResponse
+
+
 
 """ NODE RobotPX, robot: px100
-
-Services : 
-        '/px100/get_joint_states' --> type:Trigger | return current joint state
-        '/px100/get_eef_pose'     --> type:Trigger | return end effector position
-        '/px100/pathPlan'         --> type:Empty   | makes a pre set plan based on cartesian pathplaning
-        '/px100/stop'             --> type:Empty   | stop the infinete loop of follow service(if active)
-        '/px100/saveWaypoints'    --> type:Empty   | saves waypoints into parameter server namespace /waypoints/points/pt1-N
-        '/px100/clearWaypoints'   --> type:Empty,  | clear waypoint list, delete parameter server points
-        '/px100/follow'           --> type:SetBool | starts from current position and executes a path plan for all waypoints and finish at the home position, if Bool--> True itterated infinetly throught the waypoints
-        '/px100/reset'            --> type:SetBool | resets world obstacles, if bool --> True removes all stored waypoints
-        '/px100/step'             --> type:step_srv| executes (if possible) a path plan from current position to set position args --> Pose : goal position , bool : at end state have gripper open/close
-
-RobotPX does not have any Publishers or Subscribers but it does communicate with the rest of the world using the Moveti pgk
 
 """
 
@@ -93,6 +83,11 @@ class RobotPX():
         self.gripper_state_open  =  [0.035, -0.035] #[0.036,-0.036] flat candle values
         self.gripper_state_close =  [0.018, -0.018] #[0.03,-0.03]   flat candle values
 
+        self.refill = False
+
+        rospy.Service('refill', Empty, self.setRefillMode)
+
+
         rospy.wait_for_service('get_eef_goal_pick')
         rospy.wait_for_service('get_eef_goal_place')
         self.get_eef_goal_pick  = rospy.ServiceProxy('get_eef_goal_pick' , get_eef_goal)
@@ -108,9 +103,11 @@ class RobotPX():
         rate = rospy.Rate(1) # publish freacuancy 
         while not rospy.is_shutdown():
             rospy.logdebug("PICK AND PLACE--> looping!")
-
-            # self.scene.play_scene()
-            self.pick_and_place()
+            
+            self.refill = True
+            if(self.refill):
+                self.pick_and_place()
+                self.refill = False
 
             rate.sleep()
 
@@ -121,8 +118,9 @@ class RobotPX():
         self.pick(self.get_eef_goal_pick())
         self.place(self.get_eef_goal_place())
 
-        # self.pick(self.get_eef_goal_place())
-        # self.place(self.get_eef_goal_pick())
+        self.pick(self.get_eef_goal_pick())
+        self.place(self.get_eef_goal_place())
+
 
 
     def pick(self,poses):
@@ -213,6 +211,10 @@ class RobotPX():
             return self.all_close(pose_to_list(goal), pose_to_list(actual), tolerance)
 
         return True
+
+    def setRefillMode(self,EmptyRequest):
+        self.refill = True
+        return EmptyResponse()
 
 
 """
