@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 
 import random
-import re
 import rospy
 from tf.transformations import quaternion_from_euler
-from math import pi,cos,sin
+from math import pi,cos,sin,sqrt
 from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
 from geometry_msgs.msg import Vector3,Pose,Point, Quaternion,Transform,TransformStamped,PoseStamped
 from std_msgs.msg import ColorRGBA
 from nav_msgs.msg import Path
+from std_srvs.srv import SetBool,SetBoolRequest,SetBoolResponse
 
 
 import actionlib
@@ -25,23 +25,24 @@ COLOR_Yellow   = ColorRGBA(r=1.0,g=1.0,b=0.0,a=1.0) # Yellow
 COLOR_Green    = ColorRGBA(r=0.0,g=1.0,b=0.0,a=1.0) # Green
 COLOR_Purple   = ColorRGBA(r=1.0,g=0.0,b=1.0,a=1.0) # Green
 
+TO_DEGREE = 57.2958
+
 MODE = "CIRCLE"
-# MODE = "LINE"
+MODE = "LINE"
 
 class HUNT_POINT():
 
 
     def __init__(self):
 
-        self.polar  = {"r":0.5,"th":0}
+        self.polar  = {"r":0.2,"th":0}
         self.center = {"x":0.5,"y":0} # offset of circle center
-        self.center = {"x":0.0,"y":0} # offset of circle center
-        self.rangeUPDOWN = 0.5
+        self.rangeUPDOWN = 0.25
         self.dir = 0 
-        self.steps = 20
+        self.steps = 1
         self.step = pi/self.steps
         self.offsetDIR = pi/2
-        self.offsetDIR = 0
+        self.reverse = False
         self.time = 0 
 
         self.huntPT = Point(x=0,y=0,z=0)
@@ -57,9 +58,12 @@ class HUNT_POINT():
         self.markerType = {"ARROW":0}
 
 
+        self.tfBuffer = tf2_ros.Buffer()
+        tf2_ros.TransformListener(self.tfBuffer)
+
 
         # create path plan 
-        for timeStep in range(2*self.steps):
+        for timeStep in range(2*self.steps+1):
             self.time += self.step
             self.next_hp()
             pose = self.get_pose()
@@ -71,15 +75,30 @@ class HUNT_POINT():
         
         # reset time
         self.time = 0 
-        self.time = random.random()*2*pi
+        # self.time = random.random()*2*pi
 
+        # send info tf, plan, arrow got hunting point
+        self.publish_visualize()    
+        self.publish_huntTF()
 
     """     main loop    """
     def update(self):
         rospy.logdebug("PATH PLAN--> update")
 
-        # if(self.goal_reached()):
-        #     self.time += self.step
+        if(self.goal_reached()):
+            self.time += self.step
+            self.reverse = not self.reverse
+            self.setReverseMode(self.reverse)
+            # every pi switch reverse mode ( for LINE PATH)
+            # rospy.logerr(f" condition --> {int(self.time/(pi/2))} {int((self.time-self.step)/(pi/2))}")
+            # rospy.logerr(f" angle --> {self.time*TO_DEGREE}")
+            # if(int(self.time/(pi))>int((self.time-self.step-0.0001)/(pi))):
+            #     rospy.logerr("oeoeoeoeo")
+            #     rospy.logerr("oeoeoeoeo")
+            #     rospy.logerr("oeoeoeoeo")
+            #     rospy.logerr("oeoeoeoeo")
+            #     self.setReverseMode(self.reverse)
+            #     self.reverse = not self.reverse
 
         # self.time += self.step
         self.next_hp()
@@ -88,6 +107,29 @@ class HUNT_POINT():
         self.publish_visualize()    
         self.publish_huntTF()
         self.publish_plan()
+
+
+    """     calculate new hunting point    """
+    def goal_reached(self):
+
+        # calc turtle dist from hunt point
+        dist = self.get_dist()
+        rospy.logdebug(f"PATH PLAN --> Turtle Dist from target {dist:.2f}")
+        self.threshold = 0.1
+        if(dist<self.threshold):
+            return True
+        
+        return False
+        
+    """     calculate distance from turtle to hunting point    """
+    def get_dist(self):
+        try:
+            trans = self.tfBuffer.lookup_transform("base_footprint", 'hunt_point', rospy.Time())
+            dist = sqrt(trans.transform.translation.x ** 2 + trans.transform.translation.y ** 2)
+            return dist
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            rospy.logerr("PATH PLAN --> PROBLEMO WITH TFS ")
+            return 1
 
     """     calculate new hunting point    """
     def next_hp(self):
@@ -130,10 +172,6 @@ class HUNT_POINT():
         z  = 0
         point = Point(x=x,y=y,z=z)
         self.dir = self.polar['th']+self.offsetDIR
-        self.dir = 0
-        self.dir = 0
-        self.dir = 0
-        self.dir = 0
         return point
 
     """
@@ -196,18 +234,28 @@ class HUNT_POINT():
         self.msg_path.header.stamp = rospy.Time.now()
         self.publishPath.publish(self.msg_path) 
 
-
+    """
+    set reverse mode on/off at navigation node
+    """
+    def setReverseMode(self,mode):
+        rospy.wait_for_service('/Navigate/ReverseMode')
+        try:
+            call_srv = rospy.ServiceProxy('/Navigate/ReverseMode', SetBool)
+            resp1 = call_srv(mode)
+            rospy.logdebug("PATH PLAN --> navigation said " + resp1.message)
+        except rospy.ServiceException as e:
+            rospy.logdebug("PATH PLAN --> Service call failed: %s"%e)
 
 
 """ INIT    """
 def start():
 
     rospy.init_node('Path_Planning', log_level=rospy.DEBUG)
-    rate = rospy.Rate(0.5) # publish freacuancy 
+    rate = rospy.Rate(5) # publish freacuancy 
     hunt_point = HUNT_POINT()
 
     while not rospy.is_shutdown():
-        rospy.logdebug("Path_Planning --> loopa")
+        rospy.logdebug("PATH PLAN--> --> loopa")
         hunt_point.update()
         rate.sleep()
 
