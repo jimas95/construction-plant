@@ -11,6 +11,8 @@ from math import radians, copysign, sqrt, pow, pi, atan2,cos,sin
 from tf.transformations import euler_from_quaternion
 import numpy as np
 import random
+from std_srvs.srv import SetBool,SetBoolRequest,SetBoolResponse
+
 
 """
 NAVIGATE your Turtlebot3!
@@ -28,27 +30,42 @@ class GotoPoint():
         self.cmd_vel = rospy.Publisher('cmd_vel', Twist, queue_size=5)
         self.r = rospy.Rate(10)
         self.tf_listener = tf.TransformListener()
-        self.odom_frame = 'odom'
+        self.odom_frame = 'world'
+        self.base_frame = 'base_footprint'
+
         self.hunt_pt = Vector3()
+
+        rospy.Service('/Navigate/ReverseMode', SetBool, self.setReverseMode)
+
+        self.reverse = False
 
         self.tfBuffer = tf2_ros.Buffer()
         tf2_ros.TransformListener(self.tfBuffer)
 
+
         # wait for transforms to be published
         try:
-            self.tf_listener.waitForTransform(self.odom_frame, 'base_footprint'  , rospy.Time(), rospy.Duration(5.0))
-            self.tf_listener.waitForTransform("base_footprint", 'hunt_point'     , rospy.Time(), rospy.Duration(5.0))
-            self.base_frame = 'base_footprint'
+            self.tf_listener.waitForTransform(self.odom_frame, self.base_frame  , rospy.Time(), rospy.Duration(5.0))
+            self.tf_listener.waitForTransform(self.base_frame, 'hunt_point'     , rospy.Time(), rospy.Duration(5.0))
+            self.tf_listener.waitForTransform('base_footreverse', 'hunt_point'  , rospy.Time(), rospy.Duration(5.0))
         except (tf.Exception, tf.ConnectivityException, tf.LookupException):
             rospy.loginfo("Cannot find transform between odom and base_footprint or for hunt point")
             rospy.signal_shutdown("tf Exception")
 
 
+    def setReverseMode(self,SetBoolRequest):
+        self.reverse = SetBoolRequest.data
+        rospy.logdebug("NAVIGATE --> activate reverse mode")
+        if(SetBoolRequest.data):
+            self.base_frame = 'base_footreverse'
+            return SetBoolResponse(success = True,message = "Reverse mode ON")
+        self.base_frame = 'base_footprint'
+        return SetBoolResponse(success = True,message = "Reverse mode OFF")
+        
+
     def get_tf(self):
         try:
-            self.trans = self.tfBuffer.lookup_transform("base_footprint", 'hunt_point', rospy.Time())
-            # self.trans = self.tfBuffer.lookup_transform("hunt_point","base_footprint", rospy.Time())
-            # rospy.logdebug(mk)
+            self.trans = self.tfBuffer.lookup_transform(self.base_frame, 'hunt_point', rospy.Time())
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             rospy.logerr("NAVIGATE --> PROBLEMO WITH TFS ")
             self.r.sleep()
@@ -56,8 +73,11 @@ class GotoPoint():
     def get_dist(self):
         self.dist = sqrt(self.trans.transform.translation.x ** 2 + self.trans.transform.translation.y ** 2)
 
+
     def get_dir(self):
         self.dir = atan2(self.trans.transform.translation.y, self.trans.transform.translation.x)
+
+
 
     def reach_pos(self):
         if self.dist > 0.05:
@@ -83,15 +103,13 @@ class GotoPoint():
         rospy.logdebug(f"NAVIGATION pou prepei na koitaw --> {self.dir*TO_DEGREE:.2f}")
         rospy.logdebug(f"NAVIGATION pou tou lew na koita --> {euler_from_quaternion(poutsa)[2]*TO_DEGREE:.2f}")
         rospy.logdebug(f"NAVIGATION target dist          --> {self.dist:.4f}")
-        rospy.logdebug(f"NAVIGATION plaka me k           --> {self.trans.transform.translation.y:.2f}")
+        rospy.logdebug(f"NAVIGATION reverse MODE         --> {self.reverse}")
 
 
     def update(self):
 
-        position = Point()
         move_cmd = Twist()
         (position, rotation) = self.get_odom()
-        self.last_rotation = 0
         self.linear_speed = 1
         self.angular_speed = 1
 
@@ -114,8 +132,8 @@ class GotoPoint():
             # move_cmd.angular.z = 0.5
 
             move_cmd.angular.z = self.dir
-            if(abs(self.dir*TO_DEGREE)<25):
-                move_cmd.linear.x = 0.1
+            if(abs(self.dir*TO_DEGREE)<15):
+                move_cmd.linear.x = 0.04
 
             if(self.dist<0.05):
                 move_cmd.linear.x = 0.0
@@ -123,7 +141,23 @@ class GotoPoint():
             self.threshold_speed(move_cmd)
 
 
-            # rospy.logdebug(f"NAVIGATION --> {move_cmd}")
+            # hack for line 
+            # hack for line 
+            # hack for line 
+            # hack for line 
+            # (position, rotation) = self.get_odom()
+            # if position.x > 0.2 : # go reverse 
+            #     self.reverse = True
+            # elif(position.x <0):
+            #     self.reverse = False
+
+            # move_cmd.linear.x = 0.04
+            if(self.reverse):
+                move_cmd.linear.x = -move_cmd.linear.x
+
+            
+
+
             self.cmd_vel.publish(move_cmd)
             self.r.sleep()
 
@@ -140,39 +174,6 @@ class GotoPoint():
 
         move_cmd.linear.x = min(move_cmd.linear.x, MAX_ROTATION_SPEED)
         
-
-    def get_cmd(self):
-        move_cmd = Twist()
-        goal = {"x":1,"y":0, "th":0}
-        (position, rotation) = self.get_odom()
-        x_start = position.x
-        y_start = position.y
-        path_angle = atan2(goal['y'] - y_start, goal['x']- x_start)
-
-        if path_angle < -pi/4 or path_angle > pi/4:
-            if goal['y'] < 0 and y_start < goal['y']:
-                path_angle = -2*pi + path_angle
-            elif goal['y'] >= 0 and y_start > goal['y']:
-                path_angle = 2*pi + path_angle
-
-        if self.last_rotation > pi-0.1 and rotation <= 0:
-            rotation = 2*pi + rotation
-        elif self.last_rotation < -pi+0.1 and rotation > 0:
-            rotation = -2*pi + rotation
-            
-        move_cmd.angular.z = self.angular_speed * path_angle-rotation
-
-        distance = sqrt(pow((goal['x'] - x_start), 2) + pow((goal['x'] - y_start), 2))
-        move_cmd.linear.x = min(self.linear_speed * distance, 0.5)
-
-        if move_cmd.angular.z > 0:
-            move_cmd.angular.z = min(move_cmd.angular.z, 1.5)
-        else:
-            move_cmd.angular.z = max(move_cmd.angular.z, -1.5)
-
-        self.last_rotation = rotation 
-        return move_cmd
-
 
 
     def get_odom(self):
