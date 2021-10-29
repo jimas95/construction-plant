@@ -38,6 +38,7 @@ class GotoPoint():
         rospy.Service('/Navigate/ReverseMode', SetBool, self.setReverseMode)
 
         self.reverse = False
+        self.reverse = True
 
         self.tfBuffer = tf2_ros.Buffer()
         tf2_ros.TransformListener(self.tfBuffer)
@@ -120,16 +121,7 @@ class GotoPoint():
             self.get_tf()
             self.get_dist()
             self.get_dir()
-            self.ti_fasi()
-
-            # poutsa = [self.trans.transform.rotation.x,self.trans.transform.rotation.y,self.trans.transform.rotation.z,self.trans.transform.rotation.w]
-            # angle = euler_from_quaternion(poutsa)[2]*TO_DEGREE
-
-            # move_cmd.angular.z = -angle/10
-            # move_cmd.linear.x  = self.dist
-
-
-            # move_cmd.angular.z = 0.5
+            # self.ti_fasi()
 
             move_cmd.angular.z = self.dir
             if(abs(self.dir*TO_DEGREE)<15):
@@ -141,21 +133,8 @@ class GotoPoint():
             self.threshold_speed(move_cmd)
 
 
-            # hack for line 
-            # hack for line 
-            # hack for line 
-            # hack for line 
-            # (position, rotation) = self.get_odom()
-            # if position.x > 0.2 : # go reverse 
-            #     self.reverse = True
-            # elif(position.x <0):
-            #     self.reverse = False
-
-            # move_cmd.linear.x = 0.04
             if(self.reverse):
                 move_cmd.linear.x = -move_cmd.linear.x
-
-            
 
 
             self.cmd_vel.publish(move_cmd)
