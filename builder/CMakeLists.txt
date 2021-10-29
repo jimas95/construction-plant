@@ -158,6 +158,7 @@ include_directories(
 catkin_install_python(PROGRAMS
   nodes/navigate.py
   nodes/path_plan.py
+  nodes/heater.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

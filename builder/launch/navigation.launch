@@ -2,15 +2,16 @@
 
 <!-- TURTLEBOT TO NAVIGATE AT A KNOWN ENVIROMENT -->
 
-  <arg name="use_fake"                  default="True"  doc="use simulation turtle"/>
+  <arg name="use_fake"                  default="false"  doc="use simulation turtle"/>
   <arg name="use_real"                  default="false" doc="use use real turtle robot"/>
-  <arg name="use_loca"                  default="false" doc="use localization node "/>
+  <arg name=" "                  default="false" doc="use localization node "/>
   <arg name="use_navi"                  default="true"  doc="use navigation node "/>
-  <arg name="map"                       default="map_lab_floor" doc="set map name"/>
+  <!-- <arg name="map"                       default="map_lab_floor" doc="set map name"/> -->
+  <arg name="map"                       default="map_eleve" doc="set map name"/>
   
   <arg name="map_file"                  value="$(find builder)/maps/$(arg map).yaml"/>
 
-  <!-- Use Gazebo -->
+  <!-- Use fake node -->
     <include if="$(arg use_fake)" file="$(find builder)/launch/bring_up_fake.launch">
     </include>
 
@@ -24,7 +25,10 @@
   <node  if="$(arg use_navi)" pkg="builder" type="navigate.py" name="navigate"     output="screen">
   </node>
 
+  <!-- Use Path Planing -->
   <node  if="$(arg use_navi)" pkg="builder" type="path_plan.py" name="Path_Planning"     output="screen">
   </node>
+ 
+  <!-- <node type="rviz" name="rviz" pkg="rviz" args="-d $(find brain)/rviz/allTogether.rviz" /> -->
 
 </launch>
