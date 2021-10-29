@@ -25,6 +25,9 @@
   <node pkg="turtlebot3_bringup" type="turtlebot3_diagnostics" name="turtlebot3_diagnostics" output="screen"/>
 
 
+  <!-- HEATER CONTROL NODE -->
+  <node machine="turtlebot" pkg="builder" type="heater.py" name="heating_node" output="screen"/>
+
 
   <!-- SLAM -->
   <!-- <include file="$(find turtlebot3_slam)/launch/turtlebot3_slam.launch">
