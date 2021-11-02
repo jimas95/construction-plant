@@ -2,6 +2,8 @@
 
 <arg name="robot" default="mightyturtle.local" doc="define on witch machine to run, set localhost.local from your computer, set mightyturtle.local if ssh into turtlebot "/>
 
+<param name="use_real" value="true" />
+
 <!-- set machine tag -->
   <machine name="turtlebot"
     address="$(arg robot)"
@@ -35,19 +37,14 @@
     <arg name="open_rviz"        value="false"/>
   </include> -->
 
-
-  <arg name="map"                       default="mapmap" doc="set map name"/>
+  <!-- UPLOAD MAP -->
+  <arg name="map"                       default="map" doc="set map name"/>
   <arg name="map_file"                  value="$(find builder)/maps/$(arg map).yaml"/>
+  
+  <!-- LOCALIZATION -->
   <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
     <arg name="map_file"                 value="$(arg map_file)"/>
     <arg name="open_rviz"                value="false"/>
   </include>
-
-  <!-- Navigation Move Base -->
-  <!-- <include file="$(find turtlebot3_navigation)/launch/move_base.launch" >
-    <arg name="model"                value="burger"/>
-    <arg name="move_forward_only"    value="false"/>
-  </include> -->
-
 
 </launch>
