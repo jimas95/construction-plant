@@ -2,10 +2,11 @@
 
   <arg name="model" value="burger"/>
   <param name="tb3_model" value="burger"/>
+  <param name="use_real" value="false" />
   <arg name="multi_robot_name" default="turtleBuilder"/>
 
 
-  <arg name="urdf_file" default="$(find xacro)/xacro --inorder '$(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro'" />
+  <arg name="urdf_file" default="$(find xacro)/xacro '$(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro'" />
   <param name="robot_description" command="$(arg urdf_file)" />
 
 
@@ -15,6 +16,5 @@
     <param name="publish_frequency" type="double" value="50.0" />
   </node>
 
-  <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find turtlebot3_fake)/rviz/turtlebot3_fake.rviz"/> -->
 </launch>
 
