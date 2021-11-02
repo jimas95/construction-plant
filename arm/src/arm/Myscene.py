@@ -34,10 +34,10 @@ class MySceneMoveIt():
     def create_my_scene(self):  
         self.scene.clear()
         rospy.sleep(2)
-        table_position = [0,0,0]
-        self.add_leg([-0.15,0,0],0.5,"tower")
-        self.add_leg([-0.15,0,0],0.5,"tower")
-        self.add_table(width=1.0,height=1.0,position=table_position,name="table")
+        self.add_leg([-0.15,0,0],0.5,"tower_1")
+        self.add_leg([-0.15,0,0],0.5,"tower_2")
+        self.add_table(width=0.81,height=0.81,position=[0.455,0.095,0],name="table_1")
+        self.add_table(width=1.20,height=1.20,position=[1.460,0.290,0],name="table_2")
         self.add_obstacle()    
         self.add_graspObject()
 
@@ -46,7 +46,7 @@ class MySceneMoveIt():
     """    
     def add_table(self,width,height,position,name):
         box_pose = geometry_msgs.msg.PoseStamped()
-        box_pose.header.frame_id = self.robot_name + "/base_link"
+        box_pose.header.frame_id = "/world"
         box_pose.pose.orientation.w = 1.0
         box_pose.pose.position.x = position[0]
         box_pose.pose.position.y = position[1]
@@ -63,7 +63,7 @@ class MySceneMoveIt():
     def add_leg(self,position,length,name):
         leg_size = 0.025
         box_pose = geometry_msgs.msg.PoseStamped()
-        box_pose.header.frame_id = self.robot_name + "/base_link"
+        box_pose.header.frame_id = "/world"
         box_pose.pose.orientation.w = 1.0
         box_pose.pose.position.x = position[0]
         box_pose.pose.position.y = position[1]

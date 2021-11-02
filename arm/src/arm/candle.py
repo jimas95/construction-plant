@@ -109,10 +109,7 @@ class CANDLE():
 
 
     def get_candle_pose(self):
-        # if(self.status=="pick"):
         return self.get_pose(offset=[0,0],euler=[0,pi/2,self.polar['theta']+pi/2])
-
-        # return self.get_pose(offset=[0,0],euler=[0,0,0])
 
     def get_grasp_pose(self):
         direction = [0, self.offset_grasp[2], self.polar['theta']]

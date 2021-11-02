@@ -41,7 +41,7 @@ class RobotPX():
         super(RobotPX, self).__init__()
         moveit_commander.roscpp_initialize(sys.argv)
         rospy.init_node('RobotPX',anonymous=True,log_level=rospy.DEBUG)
-        # rospy.init_node('RobotPX',anonymous=True)
+        rospy.on_shutdown(self.shutdown)
 
         robot_name = "px100"
         self.robot_name = robot_name
@@ -121,6 +121,8 @@ class RobotPX():
         self.pick(self.get_eef_goal_pick())
         self.place(self.get_eef_goal_place())
 
+        self.group.set_named_target("Sleep")
+        self.group.go(wait=True)
 
 
     def pick(self,poses):
@@ -201,7 +203,7 @@ class RobotPX():
         if type(goal) is list:
             for index in range(len(goal)):
                 if abs(actual[index] - goal[index]) > tolerance:
-                    rospy.logerr("PICK AND PLACE: PX100 failed to be accurate")
+                    rospy.logerr("PICK AND PLACE ==> PX100 failed to be accurate")
                     return False
 
         elif type(goal) is geometry_msgs.msg.PoseStamped:
@@ -215,6 +217,14 @@ class RobotPX():
     def setRefillMode(self,EmptyRequest):
         self.refill = True
         return EmptyResponse()
+
+    def shutdown(self):
+        # rospy.logerr("PICK AND PLACE ==> going to Sleep position!")
+        # self.group.set_named_target("Home")
+        # self.group.go(wait=True)
+        # self.group.set_named_target("Sleep")
+        # self.group.go(wait=True)
+        rospy.logerr("PICK AND PLACE ==> SHUT DOWN")
 
 
 """
