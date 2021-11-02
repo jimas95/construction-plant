@@ -1,5 +1,8 @@
 float32 centerX
 float32 centerY
 float32 range
+float32 step
+float32 step_size
+string  mode
 ---
 string msg
