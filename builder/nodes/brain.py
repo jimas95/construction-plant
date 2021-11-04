@@ -22,8 +22,8 @@ MODES = {
         "PRINT_LINE_2": PathPlanInfoRequest(centerX = 1.4, centerY =  0.165 , range = 0.2  , step = 2*pi   , step_size = 2.0, mode = "LINE"),
         "COOL_LINE_2":  PathPlanInfoRequest(centerX = 1.4, centerY =  0.165 , range = 0.3  , step = 2*pi   , step_size = 2.0, mode = "LINE"),
         
-        "CIRCLE_1"   :  PathPlanInfoRequest(centerX = 1.5, centerY =  0.2   , range = 0.2   , step = 2*pi/10, step_size = 10 , mode = "CIRCLE"),
-        "CIRCLE_2"   :  PathPlanInfoRequest(centerX = 1.5, centerY =  0.2   , range = 0.35  , step = 2*pi/10, step_size = 10 , mode = "CIRCLE"),
+        "CIRCLE_1"   :  PathPlanInfoRequest(centerX = 1.5, centerY =  0.2   , range = 0.2   , step = 2*pi/20, step_size = 20 , mode = "CIRCLE"),
+        "CIRCLE_2"   :  PathPlanInfoRequest(centerX = 1.5, centerY =  0.2   , range = 0.35  , step = 2*pi/20, step_size = 20 , mode = "CIRCLE"),
 
         "RESET":        PathPlanInfoRequest(centerX = 0.0, centerY =  0.0   , range = 0.0  , step = 0 , step_size = 0.0, mode = "RESET"),
         "REFILL":       PathPlanInfoRequest(centerX = 0.0, centerY =  0.0   , range = 0.0  , step = 0 , step_size = 0.0, mode = "REFILL"),
@@ -67,24 +67,24 @@ class BRAIN():
             self.stopPlan(MODES["RESUME"])
 
         elif(self.mode=="PRINT_LINE_1"):
-            self.heater_mode(True)
+            # self.heater_mode(True)
             self.changePlan(MODES["PRINT_LINE_1"])
 
         elif(self.mode=="PRINT_LINE_2"):
-            self.heater_mode(True)
+            # self.heater_mode(True)
             self.changePlan(MODES["PRINT_LINE_2"]) 
 
         elif(self.mode=="COOL_LINE_1"):
-            self.heater_mode(False)
+            # self.heater_mode(False)
             self.changePlan(MODES["COOL_LINE_1"])
 
         elif(self.mode=="COOL_LINE_2"):
-            self.heater_mode(False)
+            # self.heater_mode(False)
             self.changePlan(MODES["COOL_LINE_2"]) 
         
         elif(self.mode=="REFILL"):  
             self.changePlan(MODES["REFILL"]) 
-            self.refillBuilder() 
+            # self.refillBuilder() 
 
         elif(self.mode=="RESET"):
             self.changePlan(MODES["RESET"]) 

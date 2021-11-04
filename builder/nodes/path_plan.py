@@ -10,7 +10,7 @@ from geometry_msgs.msg import Vector3,Pose,Point, Quaternion,Transform,Transform
 from std_msgs.msg import ColorRGBA
 from nav_msgs.msg import Path
 from std_srvs.srv import SetBool,SetBoolRequest,SetBoolResponse
-
+from builder.srv import PathPlanInfo
 
 import actionlib
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
@@ -27,41 +27,43 @@ COLOR_Purple   = ColorRGBA(r=1.0,g=0.0,b=1.0,a=1.0) # Green
 
 TO_DEGREE = 57.2958
 
-MODE = "CIRCLE"
-MODE = "LINE"
-MODE = "REFILL"
+
 
 class HUNT_POINT():
 
 
     def __init__(self):
 
-        self.polar  = {"r":0.2,"th":0}
-        self.center = {"x":0.5,"y":0} # offset of circle center
+        self.center = {"x":0.5,"y":0} # center
         self.dir = 0 
-        self.steps = 1
-        self.step = pi/self.steps
+        self.step_size = 2
+        self.step = 2*pi/self.step_size
         self.offsetDIR = pi/2
-        self.reverse = False
+        self.reverse = True
         self.time = 0 
+        self.stop = False
 
-        if(MODE == "CIRCLE"):
-            self.steps = 10
-            self.step = pi/self.steps
+
+        # SET MODE 
+        self.MODE = "CIRCLE"
+        self.MODE = "LINE"
+        self.MODE = "REFILL"
+        self.MODE = "RESET"
+        
+
+
+        if(self.MODE == "CIRCLE"):
+            self.step_size = 10
+            self.step = 2*pi/self.step_size
             self.center = {"x":0.5,"y":0} # offset of circle center
 
 
-        if(MODE == "LINE"):
-            self.steps = 1
-            self.step = pi/self.steps
-            self.center = {"x":0.6,"y":0} # offset of circle center
-            self.rangeUPDOWN = 0.15
+        if(self.MODE == "LINE"):
+            self.step_size = 2
+            self.step = 2*pi/self.step_size
+            self.center = {"x":1.0,"y":0.1} # offset of LINE center
+            self.range = 0.15
 
-
-        if(MODE == "REFILL"):
-            self.steps = 1
-            self.step = 2.0*pi/self.steps
-            self.center = {"x":0.1,"y":0.0} # offset of circle center
 
         self.huntPT = Point(x=0,y=0,z=0)
 
@@ -80,19 +82,12 @@ class HUNT_POINT():
         tf2_ros.TransformListener(self.tfBuffer)
 
 
-        # create path plan 
-        for timeStep in range(2*self.steps+1):
-            self.time += self.step
-            self.next_hp()
-            pose = self.get_pose()
-            pose_stamped = PoseStamped(pose = pose)
-            pose_stamped.header.stamp = rospy.Time.now()
-            pose_stamped.header.frame_id = "world"
-            self.msg_path.poses.append(pose_stamped)
-            self.publish_plan()
-        
-        # reset time
-        self.time = 0 
+        rospy.Service('/path_plan/set_plan', PathPlanInfo, self.setPlan)
+        rospy.Service('/path_plan/stop'   , SetBool, self.activatePlan)
+
+        # draw path plan 
+        self.drawPLAN()
+
         # self.time = random.random()*2*pi
 
         # send info tf, plan, arrow got hunting point
@@ -105,10 +100,21 @@ class HUNT_POINT():
     """     main loop    """
     def update(self):
         rospy.logdebug("PATH PLAN--> update")
+        rospy.logdebug(f"PATH PLAN--> TIME {self.time}")
+        rospy.logdebug(f"PATH PLAN--> STOP {self.stop}")
+        rospy.logdebug(f"PATH PLAN--> MODE {self.MODE}")
 
-        if(self.goal_reached()):
+        if(self.goal_reached() and self.stop==False):
+            rospy.logdebug("PATH PLAN--> Goal Reached")
+            temp = self.time
             self.time += self.step
-            if(MODE == "LINE"):
+
+            # stop after one cycle 
+            if (temp<2*pi and self.time>=2*pi):
+                rospy.loginfo("completed one cycle")
+                self.stop = True
+            
+            if(self.MODE == "LINE"):
                 self.reverse = not self.reverse
                 self.setReverseMode(self.reverse)
 
@@ -146,19 +152,43 @@ class HUNT_POINT():
     """     calculate new hunting point    """
     def next_hp(self):
         # calculate new hunting point
-        if(MODE=="CIRCLE"):
+        if(self.MODE=="CIRCLE"):
             pt = self.path_circle(self.time)
         
-        if(MODE=="LINE"):
+        if(self.MODE=="LINE"):
             pt = self.path_updown(self.time)
         
         
-        if(MODE=="REFILL"):
-            pt = Point(x=0.235,y=0,z=0)
+        if(self.MODE=="REFILL"):
+            pt = Point(x=0.45,y=0,z=0)
+            self.reverse = False
+            self.setReverseMode(self.reverse) 
+
+        if(self.MODE=="RESET"):
+            pt = Point(x=1.0,y=0,z=0)
+            self.reverse = True
+            self.setReverseMode(self.reverse) 
 
         #  update hunting point
         self.huntPT = pt 
 
+
+    def drawPLAN(self):
+        # reset time
+        self.time = 0 
+        self.msg_path.poses = []
+        while(self.time<2*pi+0.01):
+            self.time += self.step
+            self.next_hp()
+            pose = self.get_pose()
+            pose_stamped = PoseStamped(pose = pose)
+            pose_stamped.header.stamp = rospy.Time.now()
+            pose_stamped.header.frame_id = "world"
+            self.msg_path.poses.append(pose_stamped)
+            self.publish_plan()
+        
+        # reset time
+        self.time = 0 
 
     def get_pose(self):
         euler=[0,0,self.dir]
@@ -182,20 +212,20 @@ class HUNT_POINT():
     equation of circle path, based on time input
     """    
     def path_circle(self,time):
-        self.polar['th'] = time
-        x  = (self.polar['r'])*cos(self.polar['th']) + self.center['x']
-        y  = (self.polar['r'])*sin(self.polar['th']) + self.center['y']
+        
+        x  = (self.range)*cos(time) + self.center['x']
+        y  = (self.range)*sin(time) + self.center['y']
         z  = 0
         point = Point(x=x,y=y,z=z)
-        self.dir = self.polar['th']+self.offsetDIR
+        self.dir = time+self.offsetDIR
         return point
 
     """
     equation of circle path, based on time input
     """    
     def path_updown(self,time):
-        self.polar['th'] = time
-        x  = self.center['x'] + (self.rangeUPDOWN)*cos(self.polar['th'])
+        
+        x  = self.center['x'] + (self.range)*cos(time)
         y  = self.center['y']
         z  = 0
         point = Point(x=x,y=y,z=z)
@@ -250,6 +280,8 @@ class HUNT_POINT():
         self.msg_path.header.stamp = rospy.Time.now()
         self.publishPath.publish(self.msg_path) 
 
+
+    ############################  SERVICES ############################
     """
     set reverse mode on/off at navigation node
     """
@@ -262,6 +294,43 @@ class HUNT_POINT():
         except rospy.ServiceException as e:
             rospy.logdebug("PATH PLAN --> Service call failed: %s"%e)
 
+    """
+    Service for activation of path planing
+    call service True  --> pause  next goals
+    call service False --> resume next goals
+    """
+    def activatePlan(self,SetBoolRequest):
+        if(SetBoolRequest.data):
+            self.stop = True
+            msg = "PATH PLAN--> OFF"
+        else:
+            self.stop = False
+            msg = "PATH PLAN--> ON"
+
+        rospy.logdebug(msg)
+        return SetBoolResponse(success = True,message =msg)
+        
+    """
+    Service for setting information for path planing
+    offset of center 
+    step size 
+    range
+
+    """
+    def setPlan(self,srv_msg):
+        self.center['x'] = srv_msg.centerX
+        self.center['y'] = srv_msg.centerY
+        self.range = srv_msg.range
+        self.step = srv_msg.step
+        self.step_size = srv_msg.step_size
+        self.MODE = srv_msg.mode
+        if(self.MODE == "LINE"):
+            self.reverse = False
+            self.setReverseMode(self.reverse)
+        self.drawPLAN()
+        rospy.logdebug("PATH PLAN--> --> upadate plan params")
+        return "Updating planing parameters"
+        
 
 """ INIT    """
 def start():

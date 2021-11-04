@@ -13,7 +13,7 @@
     <!-- Use fake node -->
     <include if="$(arg use_fake)" file="$(find builder)/launch/bring_up_fake.launch">
     </include>
-    <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster1" args="0.25 0 0 0 0 0 1 world map 100" />
+    <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster1" args="0.4 0 0 0 0 1 0 world map 100" />
     <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster2" args="0 0 0 0 0 0 1 map odom 100" />
     <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster3" args="0 0 0 0 0 1 0 base_footprint base_footreverse 100" />
 
@@ -26,7 +26,7 @@
   
   <!-- USE REAL TURTLE -->
   <group if="$(arg use_real)">
-    <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster1" args="0.25 0 0 0 0 0 1 world map 100" />
+    <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster1" args="0.4 0 0 0 0 1 0 world map 100" />
     <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster3" args="0 0 0 0 0 1 0 base_footprint base_footreverse 100" />
 
     <include file="$(find builder)/launch/bring_up_real.launch"/>
@@ -40,6 +40,10 @@
 
   <!-- Use Navigation Movement -->
   <node  if="$(arg use_navi)" pkg="builder" type="navigate.py" name="Navigate"     output="screen">
+  </node>
+
+  <!-- Use BRAIN NODE -->
+  <node  if="$(arg use_navi)" pkg="builder" type="brain.py" name="brain"     output="screen">
   </node>
 
   <!-- <node if="$(arg open_rviz)" type="rviz" name="rviz" pkg="rviz" args="-d $(find brain)/rviz/turtle.rviz" /> -->
