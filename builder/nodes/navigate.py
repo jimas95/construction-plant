@@ -44,6 +44,11 @@ class GotoPoint():
         self.tfBuffer = tf2_ros.Buffer()
         tf2_ros.TransformListener(self.tfBuffer)
     
+        # create hunting action 
+        self._feedback = builder.msg.huntFeedback()
+        self._result   = builder.msg.huntResult()
+        self._action = actionlib.SimpleActionServer("action_hunt", builder.msg.huntAction, execute_cb=self.execute_action, auto_start = False)
+        self._action.start()
 
         # wait for transforms to be published
         try:
@@ -54,11 +59,6 @@ class GotoPoint():
             rospy.logerr("NAVIGATE --> PROBLEMO WITH TFS")
 
 
-        # create hunting action 
-        self._feedback = builder.msg.huntFeedback()
-        self._result   = builder.msg.huntResult()
-        self._action = actionlib.SimpleActionServer("action_hunt", builder.msg.huntAction, execute_cb=self.execute_action, auto_start = False)
-        self._action.start()
 
     """EXECUTE ACTION
         callback function of hunting (GOTO) action 
@@ -226,7 +226,7 @@ creates object of class and calls main loop
 if __name__ == '__main__':
     try:
         robot = GotoPoint()
-        robot.update()
+        rospy.spin()
     except rospy.ROSInterruptException:
         rospy.logerr("NAVIGATION --> SHUT DOWN")
         rospy.logerr("NAVIGATION --> SHUT DOWN")
