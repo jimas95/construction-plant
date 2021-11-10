@@ -4,12 +4,14 @@
 
 # Authors: D.Chamzas #
 
+import re
 import rospy
 from geometry_msgs.msg import Twist, Vector3
 import tf2_ros
-from math import sqrt, pi, atan2
+from math import inf, sqrt, pi, atan2
 from std_srvs.srv import SetBool,SetBoolResponse
-
+import actionlib
+import builder.msg
 
 """
 NAVIGATE your Turtlebot3!
@@ -21,13 +23,14 @@ MAX_LINEAR_SPEED = 0.5
 MIN_DIST_THRESHOLD = 0.05
 MIN_DIR_THRESHOLD = 10
 TO_DEGREE = 180.0/pi
+FREQUENCY = 20
 
 class GotoPoint():
     def __init__(self):
         rospy.init_node('navigate',anonymous=True,log_level=rospy.DEBUG)
         rospy.on_shutdown(self.shutdown)
         self.cmd_vel = rospy.Publisher('cmd_vel', Twist, queue_size=5)
-        self.r = rospy.Rate(10) # frequency
+        self.r = rospy.Rate(FREQUENCY) # frequency
         self.odom_frame = 'world'
         self.base_frame = 'base_footprint'
         self.hunt_frame = 'hunt_point'
@@ -50,8 +53,58 @@ class GotoPoint():
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             rospy.logerr("NAVIGATE --> PROBLEMO WITH TFS")
 
-        
 
+        # create hunting action 
+        self._feedback = builder.msg.huntFeedback()
+        self._result   = builder.msg.huntResult()
+        self._action = actionlib.SimpleActionServer("action_hunt", builder.msg.huntAction, execute_cb=self.execute_action, auto_start = False)
+        self._action.start()
+
+    """EXECUTE ACTION
+        callback function of hunting (GOTO) action 
+    """
+    def execute_action(self, goal):
+        # helper variables
+        r = rospy.Rate(FREQUENCY)
+        success = False
+        
+        
+        # publish info to the console for the user
+        rospy.loginfo("NAVIGATION --> HUNTER ACTION ACTIVATE")
+
+        # start executing the action
+        # for i in range(1, goal.order):
+        while(not success):
+            # check that preempt has not been requested by the client
+            if self._action.is_preempt_requested():
+                rospy.logdebug("NAVIGATION --> HUNTER ACTION CANCEL" )
+                rospy.loginfo("NAVIGATION --> Stopping the robot...")
+                self._action.set_preempted()
+                success = True
+                self.cmd_vel.publish(Twist())
+                break
+            
+            success = self.update()
+
+            # update & publish the feedback
+            self._feedback.error_dist = self.dist
+            self._feedback.error_dir  = self.dir*TO_DEGREE
+            self._feedback.reserseMD  = self.reverse
+            self._action.publish_feedback(self._feedback)
+
+            r.sleep()
+          
+            if success:
+                self._result.success = success
+                self._action.set_succeeded(self._result)
+                rospy.loginfo(f"NAVIGATION --> GOTO ACTION SUCCESS {success}")
+
+
+    """
+    SERVICE
+    change robot base frame, depending on if we navigate on reverse
+    base_footreverse frame is the same frame(base_footprint) rotated by 180 degrees
+    """
     def setReverseMode(self,SetBoolRequest):
         self.reverse = SetBoolRequest.data
         rospy.logdebug("NAVIGATE --> activate reverse mode")
@@ -61,7 +114,10 @@ class GotoPoint():
         self.base_frame = 'base_footprint'
         return SetBoolResponse(success = True,message = "Reverse mode OFF")
 
-
+    """
+    UPDATE transforamation using tf2
+    lookUP from robot base --> hunting point
+    """
     def get_tf(self):
         try:
             self.trans = self.tfBuffer.lookup_transform(self.base_frame, self.hunt_frame, rospy.Time())
@@ -124,23 +180,22 @@ class GotoPoint():
         rospy.logdebug(f"NAVIGATION reverse MODE         --> {self.reverse}")
         rospy.logdebug(f"------------------------")
 
-
+    """
+    main navigation functions, make all calculation and publish cmd
+    return False only if target goal (hunting point) is reached
+    """
     def update(self):
+        self.get_tf()
+        self.get_dist()
+        self.get_dir()
+        self.cmd_vel.publish(self.get_cmd())
+        # self.debug_msg()
 
+        if(self.reach_dir() and self.reach_pos()):
+            return True
 
-        while not rospy.is_shutdown():
-
-            self.get_tf()
-            self.get_dist()
-            self.get_dir()
-            self.debug_msg()
-
-            self.cmd_vel.publish(self.get_cmd())
-            self.r.sleep()
-
-
-        rospy.loginfo("Stopping the robot...")
-        self.cmd_vel.publish(Twist())
+        return False
+        
 
 
     def threshold_speed(self, move_cmd):

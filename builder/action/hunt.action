@@ -1,0 +1,10 @@
+#goal definition
+bool reverseMD
+---
+#result definition
+bool success
+---
+#feedback
+float32 error_dist
+float32 error_dir
+float32 reserseMD
