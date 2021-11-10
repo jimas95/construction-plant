@@ -43,12 +43,13 @@ class HUNT_POINT():
         self.time = 0 
         self.stop = False
 
+        self.mode_count = 0 
 
         # SET MODE 
         self.MODE = "CIRCLE"
-        self.MODE = "LINE"
-        self.MODE = "REFILL"
-        self.MODE = "RESET"
+        # self.MODE = "LINE"
+        # self.MODE = "REFILL"
+        # self.MODE = "RESET"
         
 
 
@@ -56,13 +57,30 @@ class HUNT_POINT():
             self.step_size = 10
             self.step = 2*pi/self.step_size
             self.center = {"x":0.5,"y":0} # offset of circle center
+            self.range = 0.3
 
 
         if(self.MODE == "LINE"):
             self.step_size = 2
             self.step = 2*pi/self.step_size
-            self.center = {"x":1.0,"y":0.1} # offset of LINE center
-            self.range = 0.15
+
+            # line 1 
+            self.center = {"x":1.1,"y":0.15} # offset of LINE center
+            self.range = 0.3
+
+
+            # # line 1 cooling
+            # self.center = {"x":1.2,"y":0.15} # offset of LINE center
+            # self.range = 0.3
+
+            # # # line 2 
+            self.center = {"x":1.3,"y":0.25} # offset of LINE center
+            self.range = 0.3
+
+            # # line 2 cooling
+            # self.center = {"x":1.5,"y":0.25} # offset of LINE center
+            # self.range = 0.3
+
 
 
         self.huntPT = Point(x=0,y=0,z=0)
@@ -106,13 +124,40 @@ class HUNT_POINT():
 
         if(self.goal_reached() and self.stop==False):
             rospy.logdebug("PATH PLAN--> Goal Reached")
-            temp = self.time
             self.time += self.step
 
-            # stop after one cycle 
-            if (temp<2*pi and self.time>=2*pi):
-                rospy.loginfo("completed one cycle")
-                self.stop = True
+            # move to next step after one cycle 
+            if (self.time>=2*pi):
+                rospy.loginfo("MOVING TO NEXT STATE")
+                rospy.sleep(2)
+                rospy.loginfo(f"STATE NUM --> {self.mode_count}")
+                # self.stop = True
+
+                
+                # if(self.mode_count==1):
+                #     self.center = {"x":1.1,"y":0.15} # offset of LINE center
+                #     self.range = 0.3
+                # elif(self.mode_count==2):
+                #     self.MODE = "RESET"
+                #     self.reverse = True
+                # elif(self.mode_count==3):
+                #     self.MODE = "REFILL"
+                #     self.reverse = True
+                # elif(self.mode_count==4):
+                #     self.MODE = "RESET"
+                #     self.reverse = True
+                # elif(self.mode_count==5):
+                #     self.MODE = "LINE"
+                #     self.center = {"x":1.1,"y":0.25} # offset of LINE center
+                #     self.range = 0.3
+                #     self.time = 0 
+                # elif(self.mode_count==6):
+                #     self.MODE = "RESET"
+                #     self.mode_count=0
+                #     self.reverse = True
+                    
+                self.time = 0 
+                # self.mode_count = self.mode_count + 1 # next step
             
             if(self.MODE == "LINE"):
                 self.reverse = not self.reverse
@@ -120,6 +165,7 @@ class HUNT_POINT():
 
 
         self.next_hp()
+
 
         # send info tf, plan, arrow got hunting point
         self.publish_visualize()    
@@ -132,11 +178,10 @@ class HUNT_POINT():
 
         # calc turtle dist from hunt point
         dist = self.get_dist()
-        rospy.logdebug(f"PATH PLAN --> Turtle Dist from target {dist:.2f}")
+        # rospy.logdebug(f"PATH PLAN --> Turtle Dist from target {dist:.2f}")
         self.threshold = 0.1
         if(dist<self.threshold):
             return True
-        
         return False
         
     """     calculate distance from turtle to hunting point    """
@@ -286,9 +331,9 @@ class HUNT_POINT():
     set reverse mode on/off at navigation node
     """
     def setReverseMode(self,mode):
-        rospy.wait_for_service('/Navigate/ReverseMode')
+        rospy.wait_for_service('/navigate/reverse_mode')
         try:
-            call_srv = rospy.ServiceProxy('/Navigate/ReverseMode', SetBool)
+            call_srv = rospy.ServiceProxy('/navigate/reverse_mode', SetBool)
             resp1 = call_srv(mode)
             rospy.logdebug("PATH PLAN --> navigation said " + resp1.message)
         except rospy.ServiceException as e:
@@ -336,12 +381,13 @@ class HUNT_POINT():
 def start():
 
     rospy.init_node('Path_Planning', log_level=rospy.DEBUG)
-    rate = rospy.Rate(5) # publish freacuancy 
+    rate = rospy.Rate(20) # publish freacuancy 
     hunt_point = HUNT_POINT()
-
+    # main loop
     while not rospy.is_shutdown():
-        rospy.logdebug("PATH PLAN--> --> loopa")
-        hunt_point.update()
+        if(hunt_point.goal_reached()):
+            hunt_point.update()
+        hunt_point.publish_huntTF()
         rate.sleep()
 
 """  MAIN    """
