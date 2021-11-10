@@ -1,5 +1,6 @@
 #goal definition
 bool reverseMD
+bool debugMD
 ---
 #result definition
 bool success
@@ -7,4 +8,3 @@ bool success
 #feedback
 float32 error_dist
 float32 error_dir
-float32 reserseMD

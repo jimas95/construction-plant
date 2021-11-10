@@ -12,6 +12,7 @@ from math import inf, sqrt, pi, atan2
 from std_srvs.srv import SetBool,SetBoolResponse
 import actionlib
 import builder.msg
+import time
 
 """
 NAVIGATE your Turtlebot3!
@@ -30,19 +31,13 @@ class GotoPoint():
         rospy.init_node('navigate',anonymous=True,log_level=rospy.DEBUG)
         rospy.on_shutdown(self.shutdown)
         self.cmd_vel = rospy.Publisher('cmd_vel', Twist, queue_size=5)
-        self.r = rospy.Rate(FREQUENCY) # frequency
-        self.odom_frame = 'world'
-        self.base_frame = 'base_footprint'
-        self.hunt_frame = 'hunt_point'
+
 
         self.hunt_pt = Vector3()
-
-        rospy.Service('/navigate/reverse_mode', SetBool, self.setReverseMode)
-
         self.reverse = True
+        self.setReverseMode(self.reverse)
 
-        self.tfBuffer = tf2_ros.Buffer()
-        tf2_ros.TransformListener(self.tfBuffer)
+
     
         # create hunting action 
         self._feedback = builder.msg.huntFeedback()
@@ -50,7 +45,12 @@ class GotoPoint():
         self._action = actionlib.SimpleActionServer("action_hunt", builder.msg.huntAction, execute_cb=self.execute_action, auto_start = False)
         self._action.start()
 
-        # wait for transforms to be published
+        # init & wait for transforms to be published
+        self.tfBuffer = tf2_ros.Buffer()
+        tf2_ros.TransformListener(self.tfBuffer)
+        self.odom_frame = 'world'
+        self.base_frame = 'base_footprint'
+        self.hunt_frame = 'hunt_point'
         try:
             self.trans = self.tfBuffer.lookup_transform(self.odom_frame   , self.base_frame, rospy.Time(),rospy.Duration(5.0))
             self.trans = self.tfBuffer.lookup_transform(self.base_frame   , self.hunt_frame, rospy.Time(),rospy.Duration(5.0))
@@ -60,11 +60,12 @@ class GotoPoint():
 
 
 
-    """EXECUTE ACTION
-        callback function of hunting (GOTO) action 
+    """ 
+    EXECUTE ACTION
+    callback function of hunting (GOTO) action 
     """
     def execute_action(self, goal):
-        # helper variables
+        self.setReverseMode(goal.reverseMD)
         r = rospy.Rate(FREQUENCY)
         success = False
         
@@ -73,7 +74,6 @@ class GotoPoint():
         rospy.loginfo("NAVIGATION --> HUNTER ACTION ACTIVATE")
 
         # start executing the action
-        # for i in range(1, goal.order):
         while(not success):
             # check that preempt has not been requested by the client
             if self._action.is_preempt_requested():
@@ -89,14 +89,17 @@ class GotoPoint():
             # update & publish the feedback
             self._feedback.error_dist = self.dist
             self._feedback.error_dir  = self.dir*TO_DEGREE
-            self._feedback.reserseMD  = self.reverse
             self._action.publish_feedback(self._feedback)
+
+            if(goal.debugMD):
+                time.sleep(0.3)
+                success = True
 
             r.sleep()
           
             if success:
                 self._result.success = success
-                self._action.set_succeeded(self._result)
+                self._action.set_succeeded(result = self._result)
                 rospy.loginfo(f"NAVIGATION --> GOTO ACTION SUCCESS {success}")
 
 
@@ -105,14 +108,14 @@ class GotoPoint():
     change robot base frame, depending on if we navigate on reverse
     base_footreverse frame is the same frame(base_footprint) rotated by 180 degrees
     """
-    def setReverseMode(self,SetBoolRequest):
-        self.reverse = SetBoolRequest.data
-        rospy.logdebug("NAVIGATE --> activate reverse mode")
-        if(SetBoolRequest.data):
+    def setReverseMode(self,reverseMD):
+        self.reverse = reverseMD
+        if(reverseMD):
             self.base_frame = 'base_footreverse'
-            return SetBoolResponse(success = True,message = "Reverse mode ON")
+            rospy.logdebug("NAVIGATE --> Reverse mode ON")
+            return
         self.base_frame = 'base_footprint'
-        return SetBoolResponse(success = True,message = "Reverse mode OFF")
+        rospy.logdebug("NAVIGATE --> Reverse mode OFF")
 
     """
     UPDATE transforamation using tf2
@@ -123,7 +126,6 @@ class GotoPoint():
             self.trans = self.tfBuffer.lookup_transform(self.base_frame, self.hunt_frame, rospy.Time())
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             rospy.logerr("NAVIGATE --> PROBLEMO WITH TFS")
-            self.r.sleep()
 
     """
     return the distance from turtle pose relative to hunting point
