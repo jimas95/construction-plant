@@ -5,13 +5,10 @@
 # Authors: D.Chamzas #
 
 import rospy
-from geometry_msgs.msg import Twist, Point, Quaternion, Pose, Vector3
-import tf,tf2_ros
-from math import radians, copysign, sqrt, pow, pi, atan2,cos,sin
-from tf.transformations import euler_from_quaternion
-import numpy as np
-import random
-from std_srvs.srv import SetBool,SetBoolRequest,SetBoolResponse
+from geometry_msgs.msg import Twist, Vector3
+import tf2_ros
+from math import sqrt, pi, atan2
+from std_srvs.srv import SetBool,SetBoolResponse
 
 
 """
@@ -23,15 +20,14 @@ MAX_ROTATION_SPEED = 1.5
 MAX_LINEAR_SPEED = 0.5
 MIN_DIST_THRESHOLD = 0.05
 MIN_DIR_THRESHOLD = 10
-TO_DEGREE = 57.2958
+TO_DEGREE = 180.0/pi
 
 class GotoPoint():
     def __init__(self):
         rospy.init_node('navigate',anonymous=True,log_level=rospy.DEBUG)
         rospy.on_shutdown(self.shutdown)
         self.cmd_vel = rospy.Publisher('cmd_vel', Twist, queue_size=5)
-        self.r = rospy.Rate(10)
-        self.tf_listener = tf.TransformListener()
+        self.r = rospy.Rate(10) # frequency
         self.odom_frame = 'world'
         self.base_frame = 'base_footprint'
         self.hunt_frame = 'hunt_point'
@@ -44,17 +40,17 @@ class GotoPoint():
 
         self.tfBuffer = tf2_ros.Buffer()
         tf2_ros.TransformListener(self.tfBuffer)
-
+    
 
         # wait for transforms to be published
         try:
-            self.tf_listener.waitForTransform(self.odom_frame, self.base_frame  , rospy.Time(), rospy.Duration(5.0))
-            self.tf_listener.waitForTransform(self.base_frame, self.hunt_frame     , rospy.Time(), rospy.Duration(5.0))
-            self.tf_listener.waitForTransform('base_footreverse', self.hunt_frame  , rospy.Time(), rospy.Duration(5.0))
-        except (tf.Exception, tf.ConnectivityException, tf.LookupException):
-            rospy.logerr("NAVIGATION --> Cannot find transform for hunt point")
-            rospy.signal_shutdown("tf Exception")
+            self.trans = self.tfBuffer.lookup_transform(self.odom_frame   , self.base_frame, rospy.Time(),rospy.Duration(5.0))
+            self.trans = self.tfBuffer.lookup_transform(self.base_frame   , self.hunt_frame, rospy.Time(),rospy.Duration(5.0))
+            self.trans = self.tfBuffer.lookup_transform("base_footreverse", self.hunt_frame, rospy.Time(),rospy.Duration(5.0))
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            rospy.logerr("NAVIGATE --> PROBLEMO WITH TFS")
 
+        
 
     def setReverseMode(self,SetBoolRequest):
         self.reverse = SetBoolRequest.data
@@ -122,10 +118,8 @@ class GotoPoint():
         return move_cmd
 
     def debug_msg(self):
-        poutsa = [self.trans.transform.rotation.x,self.trans.transform.rotation.y,self.trans.transform.rotation.z,self.trans.transform.rotation.w]
         rospy.logdebug(f"------ NAVIGATION ------")
         rospy.logdebug(f"NAVIGATION direction error      --> {self.dir*TO_DEGREE:.2f}")
-        rospy.logdebug(f"NAVIGATION pou tou lew na koita --> {euler_from_quaternion(poutsa)[2]*TO_DEGREE:.2f}")
         rospy.logdebug(f"NAVIGATION target dist          --> {self.dist:.4f}")
         rospy.logdebug(f"NAVIGATION reverse MODE         --> {self.reverse}")
         rospy.logdebug(f"------------------------")
