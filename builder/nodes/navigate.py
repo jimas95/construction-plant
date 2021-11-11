@@ -28,7 +28,8 @@ FREQUENCY = 20
 
 class GotoPoint():
     def __init__(self):
-        rospy.init_node('navigate',anonymous=True,log_level=rospy.DEBUG)
+        # rospy.init_node('navigate',log_level=rospy.DEBUG)
+        rospy.init_node('navigate',log_level=rospy.INFO)
         rospy.on_shutdown(self.shutdown)
         self.cmd_vel = rospy.Publisher('cmd_vel', Twist, queue_size=5)
 
@@ -37,7 +38,10 @@ class GotoPoint():
         self.reverse = True
         self.setReverseMode(self.reverse)
 
-
+        use_real = rospy.get_param("/use_real")
+        self.linearSpeed = 0.04
+        if(not use_real):
+            self.linearSpeed = 0.1
     
         # create hunting action 
         self._feedback = builder.msg.huntFeedback()
@@ -75,6 +79,7 @@ class GotoPoint():
 
         # start executing the action
         while(not success):
+            
             # check that preempt has not been requested by the client
             if self._action.is_preempt_requested():
                 rospy.logdebug("NAVIGATION --> HUNTER ACTION CANCEL" )
@@ -87,9 +92,9 @@ class GotoPoint():
             success = self.update()
 
             # update & publish the feedback
-            # self._feedback.error_dist = self.dist
-            # self._feedback.error_dir  = self.dir*TO_DEGREE
-            # self._action.publish_feedback(self._feedback)
+            self._feedback.error_dist = self.dist
+            self._feedback.error_dir  = self.dir*TO_DEGREE
+            self._action.publish_feedback(self._feedback)
 
             if(goal.debugMD):
                 time.sleep(0.3)
@@ -125,7 +130,10 @@ class GotoPoint():
         try:
             self.trans = self.tfBuffer.lookup_transform(self.base_frame, self.hunt_frame, rospy.Time())
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-            rospy.logerr("NAVIGATE --> PROBLEMO WITH TFS")
+            rospy.logerr("NAVIGATE --> PROBLEMO WITH TFS!!")
+            rospy.logerr(f"NAVIGATE --> PROBLEMO WITH {self.base_frame}  {self.hunt_frame}")
+            rospy.logerr("-----------------")
+
 
     """
     return the distance from turtle pose relative to hunting point
@@ -163,7 +171,7 @@ class GotoPoint():
 
         # if within direction margin starting going forward
         if(self.reach_dir()):
-            move_cmd.linear.x = 0.04
+            move_cmd.linear.x = self.linearSpeed
 
         if(self.reach_pos()):
             move_cmd.linear.x  = 0.0

@@ -16,7 +16,7 @@ from builder.srv import PathPlanInfo
 import actionlib
 import builder.msg
 import tf2_ros
-import actionlib
+
 
 
 ARROW_SIZE  = Vector3(x=0.3,y=0.05,z=0.05)    # x  length   y,z size
@@ -74,30 +74,6 @@ class PLANNER():
 
         self.plan = PLAN()
 
-        # SET MODE 
-        # self.MODE = "CIRCLE"
-        # self.MODE = "LINE"
-        # self.MODE = "POINT"
-        
-
-
-        # if(self.MODE == "CIRCLE"):
-        #     self.step_size = 10
-        #     self.step = 2*pi/self.step_size
-        #     self.center = {"x":0.5,"y":0} # offset of circle center
-        #     self.range = 0.3
-
-
-        # if(self.MODE == "LINE"):
-        #     self.step_size = 2
-        #     self.step = 2*pi/self.step_size
-
-        #     # line 1 
-        #     self.center = {"x":1.1,"y":0.15} # offset of LINE center
-        #     self.range = 0.3
-
-
-
         self.huntPT = Point(x=0,y=0,z=0)
 
 
@@ -110,25 +86,60 @@ class PLANNER():
         self.markerArray.markers.append(Marker())
         self.markerType = {"ARROW":0}
 
+        # create hunting action 
+        self._feedback = builder.msg.PathPlanInfoFeedback()
+        self._result   = builder.msg.PathPlanInfoResult()
+        self._action = actionlib.SimpleActionServer("action_planner", builder.msg.PathPlanInfoAction, execute_cb=self.execute_action, auto_start = False)
+        self._action.start()
 
-        self.tfBuffer = tf2_ros.Buffer()
-        tf2_ros.TransformListener(self.tfBuffer)
-
-
-        rospy.Service('/path_plan/set_plan', PathPlanInfo, self.setPlan)
-        rospy.Service('/path_plan/stop'   , SetBool, self.activatePlan)
-
-        # draw path plan 
-        self.drawPLAN()
-
-
-        # send info tf, plan, arrow got hunting point
-        self.publish_visualize()    
-        self.publish_huntTF()
 
         # Creates the SimpleActionClient and wait for server to come up
         self.hunting_action = actionlib.SimpleActionClient('action_hunt', builder.msg.huntAction)
         self.hunting_action.wait_for_server()
+    
+    """
+    get a new plan to follow
+    """
+    def execute_action(self,goal):
+        rospy.loginfo("PATH PLAN --> GOT NEW PLAN")
+        rospy.loginfo("PATH PLAN --> ****")
+
+        self.plan.copy_plan_from_msg(goal)
+        self.drawPLAN()
+        self.publish_visualize()    
+        self.publish_huntTF()
+        self.active = True
+        rate = rospy.Rate(20) # publish freacuancy 
+       
+        # start executing the action
+        while(self.active):
+
+            # check that preempt has not been requested by the client
+            if self._action.is_preempt_requested():
+                rospy.logerr("PATH PLAN --> PLANNER ACTION CANCEL" )
+                self._action.set_preempted()
+                break
+            
+            # update & publish the feedback
+            self._feedback.time = self.time
+            self._action.publish_feedback(self._feedback)
+
+            # send info tf, plan, arrow got hunting point
+            self.publish_visualize()    
+            self.publish_huntTF()
+            self.publish_plan()            
+
+            # play the plan
+            self.update()
+            
+            # publish hunting tf point always (and fast)
+            self.publish_huntTF()
+            rate.sleep()
+
+            if(not self.active):
+                self._result.success = self.active
+                self._action.set_succeeded(result = self._result)
+                rospy.loginfo(f"PATH PLAN --> PLANNER ACTION SUCCESS {self.active}")
 
 
     """
@@ -137,18 +148,14 @@ class PLANNER():
     """
     def update(self):
         
-        
-        
-        
-
         if(self.goal_reached()):
-            rospy.logdebug(f"PATH PLAN--> MODE {self.plan.MODE}")
-            rospy.logdebug(f"PATH PLAN--> TIME {self.time}")
-            rospy.logdebug(f"PATH PLAN--> POINT {self.plan.center}")
+            rospy.logdebug(f"PATH PLAN --> MODE {self.plan.MODE}")
+            rospy.logdebug(f"PATH PLAN --> TIME {self.time}")
+            rospy.logdebug(f"PATH PLAN --> POINT {self.plan.center}")
 
             # disable planer if path is executed
             if (self.time>=2*pi):
-                rospy.logdebug("PATH PLAN--> FINISH")
+                rospy.logdebug("PATH PLAN --> FINISH")
                 self.active = False
             
             self.next_hp()
@@ -198,10 +205,7 @@ class PLANNER():
         else:
             rospy.logerr("ERROR")
             rospy.logerr("ERROR")
-            rospy.logerr("ERROR")
-            rospy.logerr("ERROR")
-            rospy.logerr("ERROR")
-            
+
         return False
         
 
@@ -329,61 +333,15 @@ class PLANNER():
         self.msg_path.header.stamp = rospy.Time.now()
         self.publishPath.publish(self.msg_path) 
 
-
-    ############################  SERVICES ############################
-
-    """
-    Service for activation of path planing
-    call service True  --> pause  next goals
-    call service False --> resume next goals
-    """
-    def activatePlan(self,SetBoolRequest):
-        if(SetBoolRequest.data):
-            self.stop = True
-            msg = "PATH PLAN--> OFF"
-        else:
-            self.stop = False
-            msg = "PATH PLAN--> ON"
-
-        rospy.logdebug(msg)
-        return SetBoolResponse(success = True,message =msg)
         
-    """
-    Service for setting information for path planing
-    offset of center 
-    step size 
-    range
-
-    """
-    def setPlan(self,srv_msg):
-        self.plan.copy_plan_from_msg(srv_msg)
-        self.drawPLAN()
-        self.active = True
-        rospy.loginfo("PATH PLAN--> GOT NEW PLAN")
-        return "Updating with new planing parameters"
-        
-
-""" INIT    """
-def start_planner():
-
-    rospy.init_node('path_planning', log_level=rospy.DEBUG)
-    # rate = rospy.Rate(20) # publish freacuancy 
-    rate = rospy.Rate(20) # publish freacuancy 
-    planner = PLANNER()
-    # main loop
-    while not rospy.is_shutdown():
-        
-        # start new plan
-        if(planner.active):
-            planner.update()
-        
-        # publish hunting tf point always (and fast)
-        planner.publish_huntTF()
-        rate.sleep()
 
 """  MAIN    """
 if __name__ == '__main__':
     try:
-        start_planner() 
+        # rospy.init_node('path_planning', log_level=rospy.DEBUG)
+        rospy.init_node('path_planning', log_level=rospy.INFO)
+        planner = PLANNER()
+        rospy.spin()
+
     except rospy.ROSInterruptException:
-        pass
+        rospy.logerr("PATH PLAN --> DEAD")

@@ -13,7 +13,7 @@
   <include file="$(find builder)/launch/slamming.launch">
     <arg name="use_fake"           value="$(arg use_fake)"/>
     <arg name="use_real"           value="$(arg use_real)"/>
-    <arg name="use_navi"           value="true"/>
+    <arg name="use_navi"           value="false"/>
     <arg name="open_rviz"          value="false"/>
   </include>
 

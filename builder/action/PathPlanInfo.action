@@ -1,0 +1,16 @@
+#goal definition
+float32 centerX
+float32 centerY
+float32 range
+float32 step_size
+float32 init_time
+bool reverse
+string  mode
+int32 repeat
+---
+#result definition
+bool success
+---
+#feedback
+float32 time
+

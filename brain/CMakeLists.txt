@@ -157,7 +157,6 @@ include_directories(
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
   nodes/smiley_face.py
-  nodes/brain.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

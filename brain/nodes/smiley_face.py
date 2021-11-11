@@ -3,43 +3,25 @@
 
 import rospy
 from rospy.core import logerr
-from std_srvs.srv import SetBool,SetBoolRequest,SetBoolResponse
-from builder.srv import PathPlanInfo,PathPlanInfoRequest,PathPlanInfoResponse
-from builder.srv import SETMODE,SETMODERequest
-from std_srvs.srv import Empty,EmptyRequest,EmptyResponse
+from std_srvs.srv import SetBool
+from std_srvs.srv import Empty
+import actionlib
+import builder.msg
+import time
 
-
-from math import pi
 """
 THIS NODE WILL DRAW/PRINT A SMILEY FACE
 This is a node controling the path planer
 Set coolling or printing mode, and where to go print and when to go for refill
 """
 
-MODES = {
-        "PRINT_LINE_1": PathPlanInfoRequest(centerX = 1.4, centerY =  0.0   , range = 0.2  , init_time = 0   , step_size = 2.0, mode = "LINE"),
-        "COOL_LINE_1":  PathPlanInfoRequest(centerX = 1.4, centerY =  0.0   , range = 0.3  , init_time = 0   , step_size = 2.0, mode = "LINE"),
-        "PRINT_LINE_2": PathPlanInfoRequest(centerX = 1.4, centerY =  0.165 , range = 0.2  , init_time = 0   , step_size = 2.0, mode = "LINE"),
-        "COOL_LINE_2":  PathPlanInfoRequest(centerX = 1.4, centerY =  0.165 , range = 0.3  , init_time = 0   , step_size = 2.0, mode = "LINE"),
-        
-        "CIRCLE_1"   :  PathPlanInfoRequest(centerX = 1.5, centerY =  0.2   , range = 0.2   , init_time = 0, step_size = 20 , mode = "CIRCLE"),
-        "CIRCLE_2"   :  PathPlanInfoRequest(centerX = 1.5, centerY =  0.2   , range = 0.35  , init_time = 0, step_size = 20 , mode = "CIRCLE"),
-
-        "RESET":        PathPlanInfoRequest(centerX = 0.0, centerY =  0.0   , range = 0.0  , init_time = 0 , step_size = 0.0, mode = "RESET"),
-        "REFILL":       PathPlanInfoRequest(centerX = 0.0, centerY =  0.0   , range = 0.0  , init_time = 0 , step_size = 0.0, mode = "REFILL"),
-        "STOP"  : SetBoolRequest(True),
-        "RESUME": SetBoolRequest(False),
-        }
-
-
-
 
 FLOW = [
     ("IDLE" ,"NULL"),
-    # ("GOTO" ,["PREPRINT",True]),
-    # ("GOTO" ,["REFILL"  ,False]),
-    # ("FILL","NULL"),
-    # ("GOTO",["PREPRINT",True]),
+    ("GOTO" ,["PREPRINT",True]),
+    ("GOTO" ,["REFILL"  ,False]),
+    ("FILL","NULL"),
+    ("GOTO",["PREPRINT",True]),
     ("GOTO",["EYE_1",True]),
     ("HEAT",True),
     ("IDLE","NULL"),
@@ -51,13 +33,16 @@ FLOW = [
     ("IDLE","NULL"),
     ("HEAT",False),
     ("GOTO",["PREPRINT",False]),
+    ("GOTO",["CIRCLE",True]),
     ("END","NULL")]
 
+
 GOTO_POS = {
-"REFILL":   PathPlanInfoRequest(centerX = 0.25, centerY =  0.0   , reverse=True ,range = 0.0  , init_time = 0   , step_size = 1.0, mode = "POINT"),
-"PREPRINT": PathPlanInfoRequest(centerX = 0.5 , centerY =  0.0   , reverse=True ,range = 0.0  , init_time = 0   , step_size = 1.0, mode = "POINT"),
-"EYE_1":    PathPlanInfoRequest(centerX = 1.0 , centerY =  0.0   , reverse=True ,range = 0.0  , init_time = 0   , step_size = 1.0, mode = "POINT"),
-"EYE_2":    PathPlanInfoRequest(centerX = 1.0 , centerY =  0.0   , reverse=True ,range = 0.0  , init_time = 0   , step_size = 1.0, mode = "POINT")
+"REFILL":   builder.msg.PathPlanInfoGoal(centerX = 0.25, centerY =  0.0   , reverse=True ,range = 0.0  , init_time = 0   , step_size = 1.0, mode = "POINT", repeat = 0),
+"PREPRINT": builder.msg.PathPlanInfoGoal(centerX = 0.5 , centerY =  0.0   , reverse=True ,range = 0.0  , init_time = 0   , step_size = 1.0, mode = "POINT", repeat = 0),
+"CIRCLE":   builder.msg.PathPlanInfoGoal(centerX = 1.35, centerY =  0.3   , reverse=True ,range = 0.4  , init_time = 0   , step_size = 20 , mode = "CIRCLE",repeat = 0),
+"EYE_1":    builder.msg.PathPlanInfoGoal(centerX = 1.5 , centerY =  0.15  , reverse=True ,range = 0.0  , init_time = 0   , step_size = 1.0, mode = "POINT", repeat = 0),
+"EYE_2":    builder.msg.PathPlanInfoGoal(centerX = 1.2 , centerY =  0.15  , reverse=True ,range = 0.0  , init_time = 0   , step_size = 1.0, mode = "POINT", repeat = 0)
 }
 
 class BRAIN():
@@ -68,7 +53,6 @@ class BRAIN():
         rospy.on_shutdown(self.shutdown)
         rospy.loginfo("Initiating smiley face NODE")
 
-        rospy.Service('/brain_node/setMode', SETMODE, self.setMode)
         self.use_real = rospy.get_param("/use_real")
 
         self.current_state = "START"
@@ -82,6 +66,10 @@ class BRAIN():
             "FILL":self.refill,
             "END":rospy.signal_shutdown
             }
+
+        # Creates the SimpleActionClient and wait for server to come up
+        self.planner_action = actionlib.SimpleActionClient('action_planner', builder.msg.PathPlanInfoAction)
+        self.planner_action.wait_for_server()
 
     def start(self,null):
         rospy.loginfo("INITILIZING 3D PRINTING A SMILEY FACE")
@@ -105,7 +93,12 @@ class BRAIN():
         plan = GOTO_POS[gowhere]
         plan.reverse = input[1] 
         rospy.loginfo(f"STATE --> GOTO --> {gowhere}")
-        self.changePlan(plan)
+        rospy.loginfo(f"STATE --> GOTO --> START ACTION")
+        self.planner_action.send_goal(plan) # Sends the goal to the action server.
+        self.planner_action.wait_for_result()
+        # while(not self.planner_action.wait_for_result(timeout=rospy.Duration(5))):
+            # rospy.loginfo(f"STATE --> GOTO --> WAIT FOR ACTION")
+
 
     def refill(self,null):
         rospy.loginfo("STATE --> CALLING REFILL SERVICE")
@@ -114,10 +107,13 @@ class BRAIN():
 
     def execute_state(self):
         rospy.loginfo(f"STATE --> {self.current_state} --> START")
+        time.sleep(0.1)
         self.STATES[self.current_state](self.command)
         rospy.loginfo(f"STATE --> {self.current_state} --> DONE")
+        time.sleep(0.1)
         rospy.loginfo("-----------------")
         rospy.loginfo("")
+        time.sleep(0.1)
     
     def print_next_state(self):
         if(len(FLOW)>0):
@@ -130,61 +126,6 @@ class BRAIN():
             (self.current_state,self.command) = FLOW.pop(0)
         else:
             rospy.logwarn("something is wrong, we run out of stages")
-
-    def setMode(self,mode_msg):
-        self.mode = mode_msg.mode
-
-        if(self.mode =="STOP"): # STOP PLANNER (NOT CMD VEL)
-            self.heater_mode(False)
-            self.stopPlan(MODES["STOP"])
-
-        elif(self.mode=="RESUME"): # RESUME PLANNER
-            self.stopPlan(MODES["RESUME"])
-
-        elif(self.mode=="PRINT_LINE_1"):
-            # self.heater_mode(True)
-            self.changePlan(MODES["PRINT_LINE_1"])
-
-        elif(self.mode=="PRINT_LINE_2"):
-            # self.heater_mode(True)
-            self.changePlan(MODES["PRINT_LINE_2"]) 
-
-        elif(self.mode=="COOL_LINE_1"):
-            # self.heater_mode(False)
-            self.changePlan(MODES["COOL_LINE_1"])
-
-        elif(self.mode=="COOL_LINE_2"):
-            # self.heater_mode(False)
-            self.changePlan(MODES["COOL_LINE_2"]) 
-        
-        elif(self.mode=="REFILL"):  
-            self.changePlan(MODES["REFILL"]) 
-            # self.refillBuilder() 
-
-        elif(self.mode=="RESET"):
-            self.changePlan(MODES["RESET"]) 
-
-        elif(self.mode=="CIRCLE_1"):
-            self.changePlan(MODES["CIRCLE_1"]) 
-
-        elif(self.mode=="CIRCLE_2"):
-            self.changePlan(MODES["CIRCLE_2"]) 
-
-        elif(self.mode=="---"):
-            pass
-        elif(self.mode=="---"):
-            pass
-        elif(self.mode=="---"):
-            pass
-        elif(self.mode=="---"):
-            pass
-        else:
-            rospy.logerr("BRAIN --> ERROR ")
-            rospy.logerr("BRAIN --> no mode found...?")
-            rospy.logerr("BRAIN --> mode:" + self.mode)
-            rospy.logerr("BRAIN --> ERROR ")
-
-        return("BRAIN --> SETTING MODE : " + self.mode)
 
 
     def shutdown(self):
@@ -204,17 +145,6 @@ class BRAIN():
         except rospy.ServiceException as e:
             rospy.logerr("BRAIN --> Service call failed: %s"%e)
 
-    """
-    change path planing node modes or settings 
-    """
-    def changePlan(self,mode):
-        rospy.wait_for_service('/path_plan/set_plan')
-        try:
-            call_srv = rospy.ServiceProxy('/path_plan/set_plan', PathPlanInfo)
-            resp1 = call_srv(mode)
-            rospy.loginfo("SET PLAN --> ********* " + resp1.msg)
-        except rospy.ServiceException as e:
-            rospy.logerr("BRAIN  --> Service call failed: %s"%e)
 
     """
     call refilling of candles, ACTIVATE ARM
@@ -253,7 +183,6 @@ def start():
     while not rospy.is_shutdown():
         brain_node.execute_state()
         brain_node.print_next_state()
-        input()
         brain_node.next_state()
         rate.sleep()
             
