@@ -99,17 +99,17 @@ class RobotPX():
     does not do much only debuging mesagges
     everything is being executed and controled using services
     """
-    def update(self):
-        rate = rospy.Rate(1) # publish freacuancy 
-        while not rospy.is_shutdown():
-            rospy.logdebug("PICK AND PLACE--> looping!")
+    # def update(self):
+    #     rate = rospy.Rate(1) # publish freacuancy 
+    #     while not rospy.is_shutdown():
+    #         # rospy.logdebug("PICK AND PLACE--> looping!")
             
-            # self.refill = True #activate non stop movement
-            if(self.refill):
-                self.pick_and_place()
-                self.refill = False
+    #         # self.refill = True #activate non stop movement
+    #         if(self.refill):
+    #             self.pick_and_place()
+    #             self.refill = False
 
-            rate.sleep()
+    #         rate.sleep()
 
 
     def pick_and_place(self):
@@ -216,6 +216,7 @@ class RobotPX():
 
     def setRefillMode(self,EmptyRequest):
         self.refill = True
+        self.pick_and_place()
         return EmptyResponse()
 
     def shutdown(self):
@@ -233,6 +234,7 @@ creates object of class and calls main loop
 if __name__ == '__main__':
     try:
         robot = RobotPX()
-        robot.update()
+        rospy.spin()
+        # robot.update()
     except rospy.ROSInterruptException:
         pass

@@ -15,7 +15,7 @@ def start():
     candle_pick.new_candle()
     candle_place.new_candle()
     while not rospy.is_shutdown():
-        rospy.logdebug("CANDLE --> UPDATE")
+        # rospy.logdebug("CANDLE --> UPDATE")
         candle_pick.publish_visualize()
         candle_place.publish_visualize()
         rate.sleep()
