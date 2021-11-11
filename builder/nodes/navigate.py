@@ -9,20 +9,20 @@ import rospy
 from geometry_msgs.msg import Twist, Vector3
 import tf2_ros
 from math import inf, sqrt, pi, atan2
-from std_srvs.srv import SetBool,SetBoolResponse
 import actionlib
 import builder.msg
 import time
+from tf.transformations import euler_from_quaternion
 
 """
-NAVIGATE your Turtlebot3!
+NAVIGATE DIFFERENTIAL DRIVE ROBOT
 
 """
 
 MAX_ROTATION_SPEED = 1.5
 MAX_LINEAR_SPEED = 0.5
 MIN_DIST_THRESHOLD = 0.05
-MIN_DIR_THRESHOLD = 10
+MIN_DIR_THRESHOLD = 5
 TO_DEGREE = 180.0/pi
 FREQUENCY = 20
 
@@ -36,6 +36,7 @@ class GotoPoint():
 
         self.hunt_pt = Vector3()
         self.reverse = True
+        self.aling_htp = False
         self.setReverseMode(self.reverse)
 
         use_real = rospy.get_param("/use_real")
@@ -56,9 +57,9 @@ class GotoPoint():
         self.base_frame = 'base_footprint'
         self.hunt_frame = 'hunt_point'
         try:
-            self.trans = self.tfBuffer.lookup_transform(self.odom_frame   , self.base_frame, rospy.Time(),rospy.Duration(5.0))
-            self.trans = self.tfBuffer.lookup_transform(self.base_frame   , self.hunt_frame, rospy.Time(),rospy.Duration(5.0))
-            self.trans = self.tfBuffer.lookup_transform("base_footreverse", self.hunt_frame, rospy.Time(),rospy.Duration(5.0))
+            self.trans = self.tfBuffer.lookup_transform(self.odom_frame   , self.base_frame, rospy.Time(),rospy.Duration(1.0))
+            self.trans = self.tfBuffer.lookup_transform(self.base_frame   , self.hunt_frame, rospy.Time(),rospy.Duration(1.0))
+            self.trans = self.tfBuffer.lookup_transform("base_footreverse", self.hunt_frame, rospy.Time(),rospy.Duration(1.0))
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             rospy.logerr("NAVIGATE --> PROBLEMO WITH TFS")
 
@@ -72,10 +73,12 @@ class GotoPoint():
         self.setReverseMode(goal.reverseMD)
         r = rospy.Rate(FREQUENCY)
         success = False
-        
+        self.aling_htp = False
         
         # publish info to the console for the user
         rospy.loginfo("NAVIGATION --> HUNTER ACTION ACTIVATE")
+
+        # self.debug_msg()
 
         # start executing the action
         while(not success):
@@ -128,12 +131,22 @@ class GotoPoint():
     """
     def get_tf(self):
         try:
-            self.trans = self.tfBuffer.lookup_transform(self.base_frame, self.hunt_frame, rospy.Time())
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            self.trans = self.tfBuffer.lookup_transform(self.base_frame, self.hunt_frame, rospy.Time(),rospy.Duration(0.1))
+        except (tf2_ros.LookupException):
             rospy.logerr("NAVIGATE --> PROBLEMO WITH TFS!!")
             rospy.logerr(f"NAVIGATE --> PROBLEMO WITH {self.base_frame}  {self.hunt_frame}")
+            rospy.logerr("MAKIS")
             rospy.logerr("-----------------")
-
+        except (tf2_ros.ConnectivityException):
+            rospy.logerr("NAVIGATE --> PROBLEMO WITH TFS!!")
+            rospy.logerr(f"NAVIGATE --> PROBLEMO WITH {self.base_frame}  {self.hunt_frame}")
+            rospy.logerr("SAKIS") 
+            rospy.logerr("-----------------")
+        except (tf2_ros.ExtrapolationException):
+            rospy.logerr("NAVIGATE --> PROBLEMO WITH TFS!!")
+            rospy.logerr(f"NAVIGATE --> PROBLEMO WITH {self.base_frame}  {self.hunt_frame}")
+            rospy.logerr("TAKIS")
+            rospy.logerr("-----------------")
 
     """
     return the distance from turtle pose relative to hunting point
@@ -146,7 +159,10 @@ class GotoPoint():
     """
     def get_dir(self):
         self.dir = atan2(self.trans.transform.translation.y, self.trans.transform.translation.x)
-
+        quad = (self.trans.transform.rotation.x,self.trans.transform.rotation.y,self.trans.transform.rotation.z,self.trans.transform.rotation.w)
+        yaw = euler_from_quaternion(quad)[2]
+        if(self.aling_htp):
+            self.dir = yaw
 
     """
     return True if reached destination goal
@@ -175,7 +191,11 @@ class GotoPoint():
 
         if(self.reach_pos()):
             move_cmd.linear.x  = 0.0
-            move_cmd.angular.z = 0.0
+            # aling with hunting point
+            self.aling_htp = True
+            self.get_dir()
+
+
 
         if(self.reverse):
             move_cmd.linear.x = - move_cmd.linear.x
@@ -184,11 +204,15 @@ class GotoPoint():
         return move_cmd
 
     def debug_msg(self):
-        rospy.logdebug(f"------ NAVIGATION ------")
-        rospy.logdebug(f"NAVIGATION direction error      --> {self.dir*TO_DEGREE:.2f}")
-        rospy.logdebug(f"NAVIGATION target dist          --> {self.dist:.4f}")
-        rospy.logdebug(f"NAVIGATION reverse MODE         --> {self.reverse}")
-        rospy.logdebug(f"------------------------")
+        self.get_tf()
+        self.get_dist()
+        self.get_dir()
+        rospy.logerr(f"------ NAVIGATION ------")
+        rospy.logerr(f"NAVIGATION direction error      --> {self.dir*TO_DEGREE:.2f}")
+        rospy.logerr(f"NAVIGATION target dist          --> {self.dist:.4f}")
+        rospy.logerr(f"NAVIGATION target goal          --> {self.trans.transform.translation.x:.4f} {self.trans.transform.translation.y:.4f}")
+        rospy.logerr(f"NAVIGATION reverse MODE         --> {self.reverse}")
+        rospy.logerr(f"------------------------")
 
     """
     main navigation functions, make all calculation and publish cmd
