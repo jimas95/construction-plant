@@ -70,7 +70,7 @@ class PLANNER():
         self.reverse = True
         self.time = 0 
         self.stop = False
-        self.active = False
+        self.success = False
 
         self.plan = PLAN()
 
@@ -101,18 +101,20 @@ class PLANNER():
     get a new plan to follow
     """
     def execute_action(self,goal):
+        rospy.loginfo("")
+        rospy.loginfo("")
         rospy.loginfo("PATH PLAN --> GOT NEW PLAN")
-        rospy.loginfo("PATH PLAN --> ****")
 
         self.plan.copy_plan_from_msg(goal)
         self.drawPLAN()
+        self.time = goal.init_time
         self.publish_visualize()    
         self.publish_huntTF()
-        self.active = True
+        self.success = False
         rate = rospy.Rate(20) # publish freacuancy 
        
         # start executing the action
-        while(self.active):
+        while(not self.success):
 
             # check that preempt has not been requested by the client
             if self._action.is_preempt_requested():
@@ -124,22 +126,21 @@ class PLANNER():
             self._feedback.time = self.time
             self._action.publish_feedback(self._feedback)
 
-            # send info tf, plan, arrow got hunting point
-            self.publish_visualize()    
-            self.publish_huntTF()
-            self.publish_plan()            
 
-            # play the plan
-            self.update()
+        
             
             # publish hunting tf point always (and fast)
             self.publish_huntTF()
+
+            # play the plan
+            self.update()
+
             rate.sleep()
 
-            if(not self.active):
-                self._result.success = self.active
+            if(self.success):
+                self._result.success = self.success
                 self._action.set_succeeded(result = self._result)
-                rospy.loginfo(f"PATH PLAN --> PLANNER ACTION SUCCESS {self.active}")
+                rospy.loginfo(f"PATH PLAN --> PLANNER ACTION SUCCESS {self.success}")
 
 
     """
@@ -149,26 +150,29 @@ class PLANNER():
     def update(self):
         
         if(self.goal_reached()):
-            rospy.logdebug(f"PATH PLAN --> MODE {self.plan.MODE}")
-            rospy.logdebug(f"PATH PLAN --> TIME {self.time}")
-            rospy.logdebug(f"PATH PLAN --> POINT {self.plan.center}")
+
 
             # disable planer if path is executed
             if (self.time>=2*pi):
-                rospy.logdebug("PATH PLAN --> FINISH")
-                self.active = False
+                rospy.loginfo("PATH PLAN --> FINISH")
+                self.success = True
             
-            self.next_hp()
+            else:
+                rospy.loginfo(f"PATH PLAN --> MODE {self.plan.MODE}")
+                rospy.loginfo(f"PATH PLAN --> TIME {self.time}")
+                rospy.loginfo(f"PATH PLAN --> POINT {self.plan.center}")
+                
+                self.next_hp()
 
 
-            # send info tf, plan, arrow got hunting point
-            self.publish_visualize()    
-            self.publish_huntTF()
-            self.publish_plan()
+                # send info tf, plan, arrow got hunting point
+                self.publish_visualize()    
+                self.publish_huntTF()
+                self.publish_plan()
 
-            # Creates a goal to send to the action server.
-            goal = self.plan.get_goal()
-            self.hunting_action.send_goal(goal) # Sends the goal to the action server.
+                # Creates a goal to send to the action server.
+                goal = self.plan.get_goal()
+                self.hunting_action.send_goal(goal) # Sends the goal to the action server.
 
             # update time
             self.time += self.plan.step
