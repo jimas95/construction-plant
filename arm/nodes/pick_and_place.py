@@ -95,28 +95,10 @@ class RobotPX():
 
   
     """
-    main update loop
-    does not do much only debuging mesagges
-    everything is being executed and controled using services
+    Execute single pick item and place item, then go back to sleep position
     """
-    # def update(self):
-    #     rate = rospy.Rate(1) # publish freacuancy 
-    #     while not rospy.is_shutdown():
-    #         # rospy.logdebug("PICK AND PLACE--> looping!")
-            
-    #         # self.refill = True #activate non stop movement
-    #         if(self.refill):
-    #             self.pick_and_place()
-    #             self.refill = False
-
-    #         rate.sleep()
-
-
     def pick_and_place(self):
 
-
-        self.pick(self.get_eef_goal_pick())
-        self.place(self.get_eef_goal_place())
 
         self.pick(self.get_eef_goal_pick())
         self.place(self.get_eef_goal_place())
