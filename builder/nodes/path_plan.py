@@ -38,21 +38,22 @@ class PLAN():
         self.reverse = True
         self.MODE = "CIRCLE"
 
-        # self.center = {"x":2*random.random(),"y":2*random.random()} 
-        # self.step_size = 2
-        # self.step = 2*pi/self.step_size
-        # self.range = 0.5
-        # self.reverse = True
-        # self.MODE = "POINT"
+        self.center = {"x":2*random.random(),"y":2*random.random()} 
+        self.step_size = 2
+        self.step = 2*pi/self.step_size
+        self.range = 0.5
+        self.reverse = True
+        self.MODE = "POINT"
 
 
     def copy_plan_from_msg(self,msg):
         self.step_size   = msg.step_size
+        self.init_time    = msg.init_time
+        self.step = 2*pi/self.step_size
         self.center['x'] = msg.centerX
         self.center['y'] = msg.centerY
         self.reverse = msg.reverse
         self.range   = msg.range
-        self.step    = msg.step
         self.MODE    = msg.mode
 
     def get_goal(self):
@@ -69,7 +70,7 @@ class PLANNER():
         self.reverse = True
         self.time = 0 
         self.stop = False
-        self.active = True
+        self.active = False
 
         self.plan = PLAN()
 
@@ -135,14 +136,15 @@ class PLANNER():
     call navigation hunting action with new point
     """
     def update(self):
-        rospy.logdebug("PATH PLAN--> update")
-        rospy.logdebug(f"PATH PLAN--> MODE {self.plan.MODE}")
-        rospy.logdebug(f"PATH PLAN--> TIME {self.time}")
-        rospy.logdebug(f"PATH PLAN--> POINT {self.plan.center}")
+        
+        
+        
+        
 
         if(self.goal_reached()):
-        # if(True):
-            
+            rospy.logdebug(f"PATH PLAN--> MODE {self.plan.MODE}")
+            rospy.logdebug(f"PATH PLAN--> TIME {self.time}")
+            rospy.logdebug(f"PATH PLAN--> POINT {self.plan.center}")
 
             # disable planer if path is executed
             if (self.time>=2*pi):
@@ -168,25 +170,20 @@ class PLANNER():
     """     calculate new hunting point    """
     def goal_reached(self):
 
-        # rospy.logdebug(f"PATH PLAN --> robot Dist from target {dist:.2f}")
-        # rospy.logdebug(f"PATH PLAN --> robot Dir  from target {dir:.2f}")
-        
-        rospy.logerr(f"result ---> {self.hunting_action.get_result()}")
-        rospy.logerr(f"state ---> {self.hunting_action.get_state()}")
         goalID = self.hunting_action.get_state()
-
         if(goalID==0):
             rospy.logerr("HUNTING ACTION STATUS --> PENDING")
         elif(goalID==1):
-            rospy.logerr("HUNTING ACTION STATUS --> ACTIVE")
+            # rospy.loginfo("HUNTING ACTION STATUS --> ACTIVE")
             return False
         elif(goalID==2):
             rospy.logerr("HUNTING ACTION STATUS --> PREEMPTED")
         elif(goalID==3):
-            rospy.logerr("HUNTING ACTION STATUS --> SUCCEEDED")
+            # rospy.loginfo("HUNTING ACTION STATUS --> SUCCEEDED")
             return True
         elif(goalID==4):
-            rospy.logerr("HUNTING ACTION STATUS --> ABORTED")
+            # rospy.loginfo("HUNTING ACTION STATUS --> ABORTED")
+            return True
         elif(goalID==5):
             rospy.logerr("HUNTING ACTION STATUS --> REJECTED")
         elif(goalID==6):
@@ -196,7 +193,7 @@ class PLANNER():
         elif(goalID==8):
             rospy.logerr("HUNTING ACTION STATUS --> RECALLED")
         elif(goalID==9):
-            rospy.logerr("HUNTING ACTION STATUS --> LOST")
+            # rospy.loginfo("HUNTING ACTION STATUS --> LOST")
             return True
         else:
             rospy.logerr("ERROR")
@@ -205,11 +202,6 @@ class PLANNER():
             rospy.logerr("ERROR")
             rospy.logerr("ERROR")
             
-
-
-        # if(self.hunting_action.get_result()):
-        #     rospy.logdebug("PATH PLAN--> Goal Reached")
-        #     return True
         return False
         
 

@@ -1,8 +1,9 @@
 float32 centerX
 float32 centerY
 float32 range
-float32 step
 float32 step_size
+float32 init_time
+bool reverse
 string  mode
 ---
 string msg

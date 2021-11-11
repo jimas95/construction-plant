@@ -87,9 +87,9 @@ class GotoPoint():
             success = self.update()
 
             # update & publish the feedback
-            self._feedback.error_dist = self.dist
-            self._feedback.error_dir  = self.dir*TO_DEGREE
-            self._action.publish_feedback(self._feedback)
+            # self._feedback.error_dist = self.dist
+            # self._feedback.error_dir  = self.dir*TO_DEGREE
+            # self._action.publish_feedback(self._feedback)
 
             if(goal.debugMD):
                 time.sleep(0.3)
@@ -100,7 +100,7 @@ class GotoPoint():
             if success:
                 self._result.success = success
                 self._action.set_succeeded(result = self._result)
-                rospy.loginfo(f"NAVIGATION --> GOTO ACTION SUCCESS {success}")
+                rospy.loginfo(f"NAVIGATION --> HUNTER ACTION SUCCESS {success}")
 
 
     """
