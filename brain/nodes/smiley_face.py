@@ -8,6 +8,8 @@ from std_srvs.srv import Empty
 import actionlib
 import builder.msg
 import time
+from math import pi
+
 
 """
 THIS NODE WILL DRAW/PRINT A SMILEY FACE
@@ -17,32 +19,73 @@ Set coolling or printing mode, and where to go print and when to go for refill
 
 
 FLOW = [
+    # start
     ("IDLE" ,"NULL"),
+    # back and forth and refill
     ("GOTO" ,["PREPRINT",True]),
     ("GOTO" ,["REFILL"  ,False]),
     ("FILL","NULL"),
     ("GOTO",["PREPRINT",True]),
+   
+    # print both eyes
     ("GOTO",["EYE_1",True]),
     ("HEAT",True),
     ("IDLE","NULL"),
     ("HEAT",False),
     ("IDLE","NULL"),
-    ("GOTO",["PREPRINT",False]),
-    ("GOTO",["EYE_2",True]),
+    ("GOTO",["EYE_2",False]),
     ("HEAT",True),
     ("IDLE","NULL"),
     ("HEAT",False),
+    ("IDLE","NULL"),
     ("GOTO",["PREPRINT",False]),
-    ("GOTO",["CIRCLE",True]),
+    ("IDLE","NULL"),
+
+    # print mouth
+    ("GOTO" ,["REFILL" ,False]),
+    ("FILL","NULL"),
+    ("GOTO",["PREPRINT",True]),
+    ("GOTO",["CENMOUTH" ,True]),
+    ("HEAT",True),
+    ("GOTO",["MOUTH"   ,True]),
+    ("HEAT",False),
+    ("GOTO",["MOUTH"   ,True]),
+    ("IDLE","NULL"),
+    ("GOTO",["PREPRINT",False]),
+
+    # print head
+    ("GOTO" ,["REFILL"  ,False]),
+    ("FILL","NULL"),
+    ("FILL","NULL"),
+    ("GOTO",["PREPRINT",True]),
+    ("GOTO",["SEMICIR" ,True]),
+    ("HEAT",True),
+    ("GOTO",["CIRCLE"  ,True]),
+    ("HEAT",False),
+    ("GOTO",["CIRCLE"  ,True]),
+    ("GOTO" ,["REFILL"  ,False]),
     ("END","NULL")]
 
 
+# FLOW = [
+#     # ("IDLE" ,"NULL"),
+#     ("GOTO",["PREPRINT",True]),
+#     ("GOTO",["CENMOUTH" ,True]),
+#     ("GOTO",["MOUTH"   ,True]),
+#     ("GOTO",["MOUTH"   ,True]),
+#     ("GOTO",["PREPRINT",False]),
+#     ("END","NULL"),
+#     ("END","NULL")]
+
 GOTO_POS = {
-"REFILL":   builder.msg.PathPlanInfoGoal(centerX = 0.25, centerY =  0.0   , reverse=True ,range = 0.0  , init_time = 0   , step_size = 1.0, mode = "POINT", repeat = 0),
-"PREPRINT": builder.msg.PathPlanInfoGoal(centerX = 0.5 , centerY =  0.0   , reverse=True ,range = 0.0  , init_time = 0   , step_size = 1.0, mode = "POINT", repeat = 0),
-"CIRCLE":   builder.msg.PathPlanInfoGoal(centerX = 1.35, centerY =  0.3   , reverse=True ,range = 0.4  , init_time = 0   , step_size = 20 , mode = "CIRCLE",repeat = 0),
-"EYE_1":    builder.msg.PathPlanInfoGoal(centerX = 1.5 , centerY =  0.15  , reverse=True ,range = 0.0  , init_time = 0   , step_size = 1.0, mode = "POINT", repeat = 0),
-"EYE_2":    builder.msg.PathPlanInfoGoal(centerX = 1.2 , centerY =  0.15  , reverse=True ,range = 0.0  , init_time = 0   , step_size = 1.0, mode = "POINT", repeat = 0)
+"REFILL":   builder.msg.PathPlanInfoGoal(centerX = 0.25, centerY =  0.0   , reverse=True ,range = 0.0  , init_time = 1   , step_size = 1.0, mode = "POINT",  direction = 0  , repeat = 0),
+"PREPRINT": builder.msg.PathPlanInfoGoal(centerX = 0.5 , centerY =  0.15  , reverse=True ,range = 0.0  , init_time = 1   , step_size = 1.0, mode = "POINT",  direction = 0  , repeat = 0),
+"CIRCLE":   builder.msg.PathPlanInfoGoal(centerX = 1.35, centerY =  0.3   , reverse=True ,range = 0.4  , init_time = 0   , step_size = 20 , mode = "CIRCLE", direction = 0  , repeat = 0),
+"SEMICIR":  builder.msg.PathPlanInfoGoal(centerX = 1.35, centerY =  0.3   , reverse=True ,range = 0.4  , init_time = pi  , step_size = 30 , mode = "CIRCLE", direction = 0  , repeat = 0),
+"EYE_1":    builder.msg.PathPlanInfoGoal(centerX = 1.5 , centerY =  0.15  , reverse=True ,range = 0.0  , init_time = 1   , step_size = 1.0, mode = "POINT",  direction = 0  , repeat = 0),
+"EYE_2":    builder.msg.PathPlanInfoGoal(centerX = 1.2 , centerY =  0.15  , reverse=True ,range = 0.0  , init_time = 1   , step_size = 1.0, mode = "POINT",  direction = 0  , repeat = 0),
+"MOUTH":    builder.msg.PathPlanInfoGoal(centerX = 1.35, centerY =  0.45  , reverse=True ,range = 0.3  , init_time = 0   , step_size = 2  , mode = "LINE",   direction = 0  , repeat = 0),
+"CENMOUTH": builder.msg.PathPlanInfoGoal(centerX = 1.35, centerY =  0.45  , reverse=True ,range = 0.0  , init_time = 1   , step_size = 1.0 , mode = "POINT",  direction = 0  , repeat = 0)
 }
 
 class BRAIN():
@@ -53,7 +96,8 @@ class BRAIN():
         rospy.on_shutdown(self.shutdown)
         rospy.loginfo("Initiating smiley face NODE")
 
-        self.use_real = rospy.get_param("/use_real")
+        self.use_real   = rospy.get_param("/use_real")
+        self.debug_mode = rospy.get_param("/debug_mode")
 
         self.current_state = "START"
         self.command = False
@@ -76,6 +120,10 @@ class BRAIN():
         
     def idle(self,null):
         response = 'n'
+
+        if(self.debug_mode):
+            response = 'y'
+
         while(response!='y'):
             response = input("STOP IDLE MODE ? ")
         
@@ -92,6 +140,9 @@ class BRAIN():
         gowhere = input[0]
         plan = GOTO_POS[gowhere]
         plan.reverse = input[1] 
+        if(not input[1]):
+            plan.direction = pi
+
         rospy.loginfo(f"STATE --> GOTO --> {gowhere}")
         rospy.loginfo(f"STATE --> GOTO --> START ACTION")
         self.planner_action.send_goal(plan) # Sends the goal to the action server.
@@ -102,7 +153,8 @@ class BRAIN():
 
     def refill(self,null):
         rospy.loginfo("STATE --> CALLING REFILL SERVICE")
-        self.refillBuilder()
+        if(not self.debug_mode):
+            self.refillBuilder()
 
 
     def execute_state(self):
