@@ -4,6 +4,7 @@ float32 centerY
 float32 range
 float32 step_size
 float32 init_time
+float32 direction
 bool reverse
 string  mode
 int32 repeat
