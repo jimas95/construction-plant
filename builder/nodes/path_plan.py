@@ -44,7 +44,7 @@ class PLAN():
         self.range = 0.5
         self.reverse = True
         self.MODE = "POINT"
-
+        self.debug_mode = rospy.get_param("/debug_mode")
 
     def copy_plan_from_msg(self,msg):
         self.step_size   = msg.step_size
@@ -57,7 +57,7 @@ class PLAN():
         self.MODE    = msg.mode
 
     def get_goal(self):
-        return builder.msg.huntGoal(reverseMD = self.reverse, debugMD = False)
+        return builder.msg.huntGoal(reverseMD = self.reverse, debugMD = self.debug_mode)
 
 class PLANNER():
 
@@ -71,6 +71,7 @@ class PLANNER():
         self.time = 0 
         self.stop = False
         self.success = False
+        self.debug_mode = rospy.get_param("/debug_mode")
 
         self.plan = PLAN()
 
@@ -225,6 +226,7 @@ class PLANNER():
         
         if(self.plan.MODE =="POINT"):
             pt = Point(x=self.plan.center['x'],y=self.plan.center['y'],z=0)
+            self.dir = 0 
 
         #  update hunting point
         self.huntPT = pt 

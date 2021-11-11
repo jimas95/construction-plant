@@ -100,7 +100,6 @@ class GotoPoint():
             self._action.publish_feedback(self._feedback)
 
             if(goal.debugMD):
-                time.sleep(0.3)
                 success = True
 
             r.sleep()
@@ -108,6 +107,7 @@ class GotoPoint():
             if success:
                 self._result.success = success
                 self._action.set_succeeded(result = self._result)
+                self.cmd_vel.publish(Twist())
                 rospy.loginfo(f"NAVIGATION --> HUNTER ACTION SUCCESS {success}")
 
 

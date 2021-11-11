@@ -3,6 +3,8 @@
   <arg name="use_fake"     default="false" doc ="use fake nodes"/>
   <arg name="use_real"     default="false" doc ="use real robots!"/>
 
+  <param name="debug_mode" value="true" />
+
 
   <include file="$(find arm)/launch/bring_up.launch">
     <arg name="use_fake"               value="$(arg use_fake)"/>
