@@ -37,13 +37,7 @@ class PLAN():
         self.range = 0.5
         self.reverse = True
         self.MODE = "CIRCLE"
-
-        self.center = {"x":2*random.random(),"y":2*random.random()} 
-        self.step_size = 2
-        self.step = 2*pi/self.step_size
-        self.range = 0.5
-        self.reverse = True
-        self.MODE = "POINT"
+        self.direction = 0 
         self.debug_mode = rospy.get_param("/debug_mode")
 
     def copy_plan_from_msg(self,msg):
@@ -55,9 +49,22 @@ class PLAN():
         self.reverse = msg.reverse
         self.range   = msg.range
         self.MODE    = msg.mode
+        self.direction = msg.direction
 
-    def get_goal(self):
+    def get_goal(self,time):
+        if(self.MODE=="LINE"):
+            if(time>0):
+                self.reverse = False
+            else:
+                self.reverse = True
+
         return builder.msg.huntGoal(reverseMD = self.reverse, debugMD = self.debug_mode)
+
+    def get_direction(self,time):
+        if(self.MODE=="LINE" and time>0): # this is for cos 
+            return self.direction + pi
+        return self.direction
+
 
 class PLANNER():
 
@@ -172,7 +179,7 @@ class PLANNER():
                 self.publish_plan()
 
                 # Creates a goal to send to the action server.
-                goal = self.plan.get_goal()
+                goal = self.plan.get_goal(self.time)
                 self.hunting_action.send_goal(goal) # Sends the goal to the action server.
 
             # update time
@@ -183,33 +190,21 @@ class PLANNER():
     def goal_reached(self):
 
         goalID = self.hunting_action.get_state()
-        if(goalID==0):
-            rospy.logerr("HUNTING ACTION STATUS --> PENDING")
-        elif(goalID==1):
+        if(goalID==1):
             # rospy.loginfo("HUNTING ACTION STATUS --> ACTIVE")
             return False
-        elif(goalID==2):
-            rospy.logerr("HUNTING ACTION STATUS --> PREEMPTED")
         elif(goalID==3):
             # rospy.loginfo("HUNTING ACTION STATUS --> SUCCEEDED")
             return True
         elif(goalID==4):
             # rospy.loginfo("HUNTING ACTION STATUS --> ABORTED")
             return True
-        elif(goalID==5):
-            rospy.logerr("HUNTING ACTION STATUS --> REJECTED")
-        elif(goalID==6):
-            rospy.logerr("HUNTING ACTION STATUS --> PREEMPTING")
-        elif(goalID==7):
-            rospy.logerr("HUNTING ACTION STATUS --> RECALLING")
-        elif(goalID==8):
-            rospy.logerr("HUNTING ACTION STATUS --> RECALLED")
         elif(goalID==9):
             # rospy.loginfo("HUNTING ACTION STATUS --> LOST")
             return True
         else:
-            rospy.logerr("ERROR")
-            rospy.logerr("ERROR")
+            rospy.logerr("HUNTING ACTION STATUS --> ERROR")
+            rospy.logerr("HUNTING ACTION STATUS --> ERROR")
 
         return False
         
@@ -226,7 +221,7 @@ class PLANNER():
         
         if(self.plan.MODE =="POINT"):
             pt = Point(x=self.plan.center['x'],y=self.plan.center['y'],z=0)
-            self.dir = 0 
+            self.dir = self.plan.direction 
 
         #  update hunting point
         self.huntPT = pt 
@@ -288,7 +283,7 @@ class PLANNER():
         y  = self.plan.center['y']
         z  = 0
         point = Point(x=x,y=y,z=z)
-        self.dir = 0
+        self.dir = self.plan.get_direction(self.time)
         return point
 
     """
