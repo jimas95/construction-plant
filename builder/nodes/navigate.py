@@ -16,7 +16,6 @@ from tf.transformations import euler_from_quaternion
 
 """
 NAVIGATE DIFFERENTIAL DRIVE ROBOT
-
 """
 
 MAX_ROTATION_SPEED = 1.5
@@ -40,7 +39,7 @@ class GotoPoint():
         self.setReverseMode(self.reverse)
 
         use_real = rospy.get_param("/use_real")
-        self.linearSpeed = 0.04
+        self.linearSpeed = 0.05
         if(not use_real):
             self.linearSpeed = 0.1
     

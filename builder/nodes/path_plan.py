@@ -19,7 +19,8 @@ import tf2_ros
 
 
 
-ARROW_SIZE  = Vector3(x=0.3,y=0.05,z=0.05)    # x  length   y,z size
+ARROW_SIZE  = Vector3(x=0.3  ,y=0.05,z=0.05)    # x  length   y,z size
+SPHERE_SIZE = Vector3(x=0.05 ,y=0.05,z=0.05)    # x  length   y,z size
 COLOR_Blue     = ColorRGBA(r=0.0,g=0.0,b=1.0,a=1.0) # Blue 
 COLOR_Red      = ColorRGBA(r=1.0,g=0.0,b=0.0,a=1.0) # Red
 COLOR_Yellow   = ColorRGBA(r=1.0,g=1.0,b=0.0,a=1.0) # Yellow
@@ -38,7 +39,8 @@ class PLAN():
         self.reverse = True
         self.MODE = "CIRCLE"
         self.direction = 0 
-        self.debug_mode = rospy.get_param("/debug_mode")
+        self.printMD = False
+        self.debug_mode = rospy.get_param("/debug_mode",default=False)
 
     def copy_plan_from_msg(self,msg):
         self.step_size   = msg.step_size
@@ -50,6 +52,11 @@ class PLAN():
         self.range   = msg.range
         self.MODE    = msg.mode
         self.direction = msg.direction
+        self.printMD = msg.printMD
+
+        if(self.MODE == "LINE"): # Do only start and finish point of the line, NO STEPS FOR NOW
+            self.step_size   = 2 
+            self.step = 2*pi/self.step_size
 
     def get_goal(self,time):
         if(self.MODE=="LINE"):
@@ -91,8 +98,7 @@ class PLANNER():
         
 
         self.markerArray = MarkerArray()
-        self.markerArray.markers.append(Marker())
-        self.markerType = {"ARROW":0}
+        self.markerType = {"ARROW":0,"SPHERE":2}
 
         # create hunting action 
         self._feedback = builder.msg.PathPlanInfoFeedback()
@@ -193,6 +199,10 @@ class PLANNER():
         if(goalID==1):
             # rospy.loginfo("HUNTING ACTION STATUS --> ACTIVE")
             return False
+        if(goalID==2):
+            # rospy.loginfo("HUNTING ACTION STATUS --> PREEMPTED")
+            self.time -= self.plan.step # repeat hunting point
+            return True
         elif(goalID==3):
             # rospy.loginfo("HUNTING ACTION STATUS --> SUCCEEDED")
             return True
@@ -203,8 +213,8 @@ class PLANNER():
             # rospy.loginfo("HUNTING ACTION STATUS --> LOST")
             return True
         else:
-            rospy.logerr("HUNTING ACTION STATUS --> ERROR")
-            rospy.logerr("HUNTING ACTION STATUS --> ERROR")
+            rospy.logerr(f"HUNTING ACTION STATUS --> ERROR {goalID}")
+            rospy.logerr(f"HUNTING ACTION STATUS --> ERROR {goalID}")
 
         return False
         
@@ -298,18 +308,32 @@ class PLANNER():
         marker.color = color
         marker.pose = pose 
         marker.id = id
+        
+
+        self.markerArray.markers.append(marker)
         self.markerArray.markers[id] = marker    
+
 
     """
     publish visualization arrow of hunting point
     """
     def publish_visualize(self):
-        # add arrown at hunt point
+        # add arrow at hunt point
         self.add_marker(    type=self.markerType['ARROW'],
                             size=ARROW_SIZE,
                             color=COLOR_Blue,
                             pose=self.get_pose(),
                             id=0)
+
+        # keep track
+        col = COLOR_Blue
+        if(self.plan.printMD):
+            col = COLOR_Red
+        self.add_marker(    type=self.markerType['SPHERE'],
+                            size=SPHERE_SIZE,
+                            color=col,
+                            pose=self.get_pose(),
+                            id=len(self.markerArray.markers))
 
         # Publish the MarkerArray
         self.publisherVis.publish(self.markerArray)

@@ -7,7 +7,7 @@ float32 init_time
 float32 direction
 bool reverse
 string  mode
-int32 repeat
+int32 printMD
 ---
 #result definition
 bool success
