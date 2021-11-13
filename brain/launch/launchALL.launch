@@ -3,7 +3,8 @@
   <arg name="use_fake"     default="false" doc ="use fake nodes"/>
   <arg name="use_real"     default="false" doc ="use real robots!"/>
 
-  <param name="debug_mode" value="true" />
+  <param name="debug_mode" value="false" />
+  <!-- <param name="debug_mode" value="True" /> -->
 
 
   <include file="$(find arm)/launch/bring_up.launch">
@@ -12,7 +13,7 @@
   </include>
 
 
-  <include file="$(find builder)/launch/slamming.launch">
+  <include file="$(find builder)/launch/launch_builder.launch">
     <arg name="use_fake"           value="$(arg use_fake)"/>
     <arg name="use_real"           value="$(arg use_real)"/>
     <arg name="use_navi"           value="false"/>
@@ -20,10 +21,11 @@
   </include>
 
 
-    <!-- Use BRAIN NODE -->
+  <!-- Use BRAIN NODE -->
   <!-- <node pkg="brain" type="smiley_face.py" name="brain"     output="screen"/> -->
 
   <node type="rviz" name="rviz" pkg="rviz" args="-d $(find brain)/rviz/allTogether.rviz" />
+  <!-- <node type="rviz" name="rviz" pkg="rviz" args="-d $(find brain)/config/slam_toolbox_default.rviz" /> -->
 
 
 </launch>

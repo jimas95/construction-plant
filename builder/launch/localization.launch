@@ -1,0 +1,20 @@
+<launch>
+  <!-- Arguments -->
+  <arg name="map"         default="map" doc="set map name"/>
+  <arg name="map_file"    value="$(find builder)/maps/$(arg map).yaml"/>
+  
+
+  <!-- Map server -->
+  <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
+
+  <!-- AMCL -->
+  <include file="$(find turtlebot3_navigation)/launch/amcl.launch"/>
+  
+  <!-- slam tool_box -->
+  <!-- <include file="$(find builder)/online_async.launch"/> -->
+  <!-- <include file="$(find builder)/localization.launch"/> -->
+
+</launch>
+
+
+
