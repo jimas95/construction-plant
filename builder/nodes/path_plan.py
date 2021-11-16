@@ -54,6 +54,8 @@ class PLAN():
         self.direction = msg.direction
         self.printMD = msg.printMD
 
+        
+        
         if(self.MODE == "LINE"): # Do only start and finish point of the line, NO STEPS FOR NOW
             self.step_size   = 2 
             self.step = 2*pi/self.step_size
@@ -78,14 +80,11 @@ class PLANNER():
 
     def __init__(self):
 
-        self.center = {"x":0.5,"y":0} # center
         self.dir = 0 
         self.offsetDIR = pi/2
-        self.reverse = True
         self.time = 0 
         self.stop = False
         self.success = False
-        self.debug_mode = rospy.get_param("/debug_mode")
 
         self.plan = PLAN()
 
@@ -99,6 +98,7 @@ class PLANNER():
 
         self.markerArray = MarkerArray()
         self.markerType = {"ARROW":0,"SPHERE":2}
+        self.markerArray.markers.append(Marker())
 
         # create hunting action 
         self._feedback = builder.msg.PathPlanInfoFeedback()
@@ -168,13 +168,15 @@ class PLANNER():
 
             # disable planer if path is executed
             if (self.time>=2*pi):
-                rospy.loginfo("PATH PLAN --> FINISH")
+                # rospy.loginfo("PATH PLAN --> FINISH")
                 self.success = True
             
             else:
-                rospy.loginfo(f"PATH PLAN --> MODE {self.plan.MODE}")
-                rospy.loginfo(f"PATH PLAN --> TIME {self.time}")
-                rospy.loginfo(f"PATH PLAN --> POINT {self.plan.center}")
+                rospy.loginfo(f"PATH PLAN --> MODE  {self.plan.MODE}")
+                rospy.loginfo(f"PATH PLAN --> REVE  {self.plan.reverse}")
+                rospy.loginfo(f"PATH PLAN --> TIME  {self.time}")
+                rospy.loginfo(f"PATH PLAN --> POINT {self.huntPT.x:.2f},{self.huntPT.y:.2f}")
+                rospy.loginfo(f"PATH PLAN --> DIRE  {self.dir*TO_DEGREE:.2f}")
                 
                 self.next_hp()
 
@@ -310,18 +312,29 @@ class PLANNER():
         marker.id = id
         
 
-        self.markerArray.markers.append(marker)
-        self.markerArray.markers[id] = marker    
+        
+        if(id == 0 ):
+            self.markerArray.markers[id] = marker    
+        else:
+            self.markerArray.markers.append(marker)
 
 
     """
     publish visualization arrow of hunting point
     """
     def publish_visualize(self):
+
+        if(len(self.markerArray.markers)>50):
+            self.markerArray.markers = []
+            self.markerArray.markers.append(Marker)
+
         # add arrow at hunt point
+        col = COLOR_Blue
+        if(self.plan.reverse):
+            col = COLOR_Yellow
         self.add_marker(    type=self.markerType['ARROW'],
                             size=ARROW_SIZE,
-                            color=COLOR_Blue,
+                            color=col,
                             pose=self.get_pose(),
                             id=0)
 
