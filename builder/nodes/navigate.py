@@ -13,14 +13,14 @@ import actionlib
 import builder.msg
 import time
 from tf.transformations import euler_from_quaternion
-
+from std_msgs.msg import Float32
 """
 NAVIGATE DIFFERENTIAL DRIVE ROBOT
 """
 
 MAX_ROTATION_SPEED = 1.5
 MAX_LINEAR_SPEED = 0.5
-MIN_DIST_THRESHOLD = 0.05
+MIN_DIST_THRESHOLD = 0.04
 MIN_DIR_THRESHOLD = 5
 TO_DEGREE = 180.0/pi
 FREQUENCY = 20
@@ -63,6 +63,9 @@ class GotoPoint():
             rospy.logerr("NAVIGATE --> PROBLEMO WITH TFS")
 
 
+        self.pub_dir  = rospy.Publisher('pub_dir', Float32, queue_size=10)
+        self.pub_dist = rospy.Publisher('pub_dist', Float32, queue_size=10)
+
 
     """ 
     EXECUTE ACTION
@@ -76,7 +79,7 @@ class GotoPoint():
         
         # publish info to the console for the user
         rospy.loginfo("NAVIGATION --> HUNTER ACTION ACTIVATE")
-
+        time.sleep(0.005)
         # self.debug_msg()
 
         # start executing the action
@@ -98,6 +101,10 @@ class GotoPoint():
             self._feedback.error_dir  = self.dir*TO_DEGREE
             self._action.publish_feedback(self._feedback)
 
+
+            self.pub_dist.publish(self.dist)            
+            self.pub_dir.publish(self.dir*TO_DEGREE)
+
             if(goal.debugMD):
                 success = True
 
@@ -107,7 +114,8 @@ class GotoPoint():
                 self._result.success = success
                 self._action.set_succeeded(result = self._result)
                 self.cmd_vel.publish(Twist())
-                rospy.loginfo(f"NAVIGATION --> HUNTER ACTION SUCCESS {success}")
+                rospy.loginfo(f"NAVIGATION --> HUNTER ACTION SUCCESS  {success}")
+                rospy.loginfo(f"NAVIGATION --> HUNTER ACTION DISTANCE {self.dist}")
 
 
     """
@@ -182,7 +190,7 @@ class GotoPoint():
     """
     def get_cmd(self):
         move_cmd = Twist()
-        move_cmd.angular.z = self.dir
+        move_cmd.angular.z = self.dir*2
 
         # if within direction margin starting going forward
         if(self.reach_dir()):
