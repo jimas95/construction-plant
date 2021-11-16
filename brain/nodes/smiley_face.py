@@ -9,7 +9,7 @@ import actionlib
 import builder.msg
 import time
 from math import pi
-
+import copy
 
 """
 THIS NODE WILL DRAW/PRINT A SMILEY FACE
@@ -100,7 +100,7 @@ GOTO_POS = {
 "SEMICIR":  builder.msg.PathPlanInfoGoal(centerX = 1.45 , centerY =  0.3   , reverse=True ,range = 0.35 , init_time = pi  , step_size = 30 , mode = "CIRCLE", direction = 0  , printMD = 0),
 "EYE_1":    builder.msg.PathPlanInfoGoal(centerX = 1.6  , centerY =  0.15  , reverse=True ,range = 0.0  , init_time = 1   , step_size = 1.0, mode = "POINT",  direction = 0  , printMD = 0),
 "EYE_2":    builder.msg.PathPlanInfoGoal(centerX = 1.4  , centerY =  0.15  , reverse=True ,range = 0.0  , init_time = 1   , step_size = 1.0, mode = "POINT",  direction = 0  , printMD = 0),
-"MOUTH":    builder.msg.PathPlanInfoGoal(centerX = 1.5  , centerY =  0.3   , reverse=True ,range = 0.25 , init_time = 0   , step_size = 20  , mode = "LINE",   direction = 0  , printMD = 0),
+"MOUTH":    builder.msg.PathPlanInfoGoal(centerX = 1.5  , centerY =  0.3   , reverse=True ,range = 0.15 , init_time = 0   , step_size = 20  , mode = "LINE",   direction = 0  , printMD = 0),
 "CENMOUTH": builder.msg.PathPlanInfoGoal(centerX = 1.5  , centerY =  0.3  , reverse=True ,range = 0.0  , init_time = 1   , step_size = 1.0 , mode = "POINT",  direction = 0  , printMD = 0)
 }
 
@@ -162,10 +162,11 @@ class BRAIN():
         
     def goto(self,input):
         gowhere = input[0]
-        plan = GOTO_POS[gowhere]
+        plan = copy.deepcopy(GOTO_POS[gowhere])
         plan.reverse = input[1] 
         if(not input[1]):
-            plan.direction = pi
+            plan.direction = pi + plan.direction
+        
         
         plan.printMD = self.heatMODE
 
