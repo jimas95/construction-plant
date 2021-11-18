@@ -85,7 +85,8 @@ class RobotPX():
 
         self.refill = False
 
-        rospy.Service('refill', Empty, self.setRefillMode)
+        rospy.Service('refill'      , Empty, self.setRefillMode)
+        rospy.Service('go_to_sleep' , Empty, self.go_to_sleep)
 
 
         rospy.wait_for_service('get_eef_goal_pick')
@@ -98,13 +99,9 @@ class RobotPX():
     Execute single pick item and place item, then go back to sleep position
     """
     def pick_and_place(self):
-
-
         self.pick(self.get_eef_goal_pick())
         self.place(self.get_eef_goal_place())
 
-        self.group.set_named_target("Sleep")
-        self.group.go(wait=True)
 
 
     def pick(self,poses):
@@ -201,12 +198,19 @@ class RobotPX():
         self.pick_and_place()
         return EmptyResponse()
 
+    def go_to_sleep(self,EmptyRequest):
+        self.group.set_named_target("Sleep")
+        self.group.go(wait=True)
+        return EmptyResponse()
+
+
     def shutdown(self):
         # rospy.logerr("PICK AND PLACE ==> going to Sleep position!")
         # self.group.set_named_target("Home")
         # self.group.go(wait=True)
         # self.group.set_named_target("Sleep")
         # self.group.go(wait=True)
+        self.group.set_named_target("Sleep")
         rospy.logerr("PICK AND PLACE ==> SHUT DOWN")
 
 
