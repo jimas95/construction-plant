@@ -87,7 +87,7 @@ class GotoPoint():
             
             # check that preempt has not been requested by the client
             if self._action.is_preempt_requested():
-                rospy.logdebug("NAVIGATION --> HUNTER ACTION CANCEL" )
+                rospy.logerr("NAVIGATION --> HUNTER ACTION CANCEL" )
                 rospy.loginfo("NAVIGATION --> Stopping the robot...")
                 self._action.set_preempted()
                 success = True
@@ -139,21 +139,11 @@ class GotoPoint():
     def get_tf(self):
         try:
             self.trans = self.tfBuffer.lookup_transform(self.base_frame, self.hunt_frame, rospy.Time(),rospy.Duration(0.1))
-        except (tf2_ros.LookupException):
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             rospy.logerr("NAVIGATE --> PROBLEMO WITH TFS!!")
             rospy.logerr(f"NAVIGATE --> PROBLEMO WITH {self.base_frame}  {self.hunt_frame}")
-            rospy.logerr("MAKIS")
             rospy.logerr("-----------------")
-        except (tf2_ros.ConnectivityException):
-            rospy.logerr("NAVIGATE --> PROBLEMO WITH TFS!!")
-            rospy.logerr(f"NAVIGATE --> PROBLEMO WITH {self.base_frame}  {self.hunt_frame}")
-            rospy.logerr("SAKIS") 
-            rospy.logerr("-----------------")
-        except (tf2_ros.ExtrapolationException):
-            rospy.logerr("NAVIGATE --> PROBLEMO WITH TFS!!")
-            rospy.logerr(f"NAVIGATE --> PROBLEMO WITH {self.base_frame}  {self.hunt_frame}")
-            rospy.logerr("TAKIS")
-            rospy.logerr("-----------------")
+            self.get_tf()
 
     """
     return the distance from turtle pose relative to hunting point
@@ -257,7 +247,6 @@ class GotoPoint():
     def shutdown(self):
         rospy.logerr("NAVIGATION --> CLOSING")
         self.cmd_vel.publish(Twist())
-        rospy.sleep(1)
 
 
 
@@ -270,4 +259,5 @@ if __name__ == '__main__':
         rospy.spin()
     except rospy.ROSInterruptException:
         rospy.logerr("NAVIGATION --> SHUT DOWN")
+        robot.shutdown()
         rospy.logerr("NAVIGATION --> SHUT DOWN")
