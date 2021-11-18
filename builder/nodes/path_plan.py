@@ -195,6 +195,7 @@ class PLANNER():
                 # Creates a goal to send to the action server.
                 goal = self.plan.get_goal(self.time)
                 self.hunting_action.send_goal(goal) # Sends the goal to the action server.
+                time.sleep(0.1)
 
             # update time
             self.time += self.plan.step
