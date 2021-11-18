@@ -18,9 +18,4 @@
       <arg name="model" value="burger" />
     </include>
 
-
-    <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster1" args="0 0 0 0 0 1 0 world map 100" />
-    <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster3" args="0 0 0 0 0 1 0 base_footprint base_footreverse 100" />
-
-
 </launch>

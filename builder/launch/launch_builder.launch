@@ -22,24 +22,22 @@
   <arg name="map"                       default="map" doc="set map name"/>
   
 
+  <!-- Use Static Transforms -->
+  <node pkg="tf" type="static_transform_publisher" name="bind_world_map" args="0.4 0 0 0 0 1 0 world map 100" />
+  <node pkg="tf" type="static_transform_publisher" name="bind_foot_reverse" args="0 0 0 0 0 1 0 base_footprint base_footreverse 100" />
+
+
   <!-- Use Gazebo node -->
   <include if="$(arg use_gazebo)" file="$(find builder)/launch/launch_gazebo.launch"/>
-
-
-
 
   <!-- Use fake node -->
   <group if="$(arg use_fake)">
     <include if="$(arg use_fake)" file="$(find builder)/launch/bring_up_fake.launch"/>
-    <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster1" args="0.4 0 0 0 0 1 0 world map 100" />
-    <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster2" args="0 0 0 0 0 0 1 map odom 100" />
-    <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster3" args="0 0 0 0 0 1 0 base_footprint base_footreverse 100" />
+    <node pkg="tf" type="static_transform_publisher" name="bind_map_odom" args="0 0 0 0 0 0 1 map odom 100" />
   </group>
   
   <!-- Use real robot -->
   <group if="$(arg use_real)">
-    <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster1" args="0.4 0 0 0 0 1 0 world map 100" />
-    <node pkg="tf" type="static_transform_publisher" name="bind_broadcaster3" args="0 0 0 0 0 1 0 base_footprint base_footreverse 100" />
     <include file="$(find builder)/launch/bring_up_real.launch"/>
   </group>
 
