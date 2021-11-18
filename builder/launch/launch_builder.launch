@@ -1,16 +1,8 @@
 <launch>
 
-  <!-- REMOVE THIS  -->
-  <!-- REMOVE THIS  -->
-  <!-- <node pkg="tf" type="static_transform_publisher" name="bind_broadcasadfsster2" args="0 0 0 0 0 0 1 map odom 100" /> -->
-  <!-- <param name="debug_mode" value="True" /> -->
-  <!-- REMOVE THIS  -->
-  <!-- REMOVE THIS  -->
-
 
 <!-- LAUNCH everything we need for the building robot -->
-
-<!-- roslaunch builder launch_builder.launch use_navi:=True use_real:=True open_rviz:=True -->
+<!-- roslaunch builder launch_builder.launch use_navi:=True use_loca:=True use_real:=True open_rviz:=True -->
 
   <!-- Arguments -->
   <arg name="use_fake"                  default="false"  doc="use fake node"/>
@@ -25,21 +17,17 @@
   <!-- Use Static Transforms -->
   <node pkg="tf" type="static_transform_publisher" name="bind_world_map" args="0.4 0 0 0 0 1 0 world map 100" />
   <node pkg="tf" type="static_transform_publisher" name="bind_foot_reverse" args="0 0 0 0 0 1 0 base_footprint base_footreverse 100" />
+  <node unless="$(arg use_loca)" pkg="tf" type="static_transform_publisher" name="bind_map_odom" args="0 0 0 0 0 0 1 map odom 100" />
 
 
   <!-- Use Gazebo node -->
   <include if="$(arg use_gazebo)" file="$(find builder)/launch/launch_gazebo.launch"/>
 
   <!-- Use fake node -->
-  <group if="$(arg use_fake)">
-    <include if="$(arg use_fake)" file="$(find builder)/launch/bring_up_fake.launch"/>
-    <node pkg="tf" type="static_transform_publisher" name="bind_map_odom" args="0 0 0 0 0 0 1 map odom 100" />
-  </group>
+  <include if="$(arg use_fake)" file="$(find builder)/launch/bring_up_fake.launch"/>
   
   <!-- Use real robot -->
-  <group if="$(arg use_real)">
-    <include file="$(find builder)/launch/bring_up_real.launch"/>
-  </group>
+  <include if="$(arg use_real)" file="$(find builder)/launch/bring_up_real.launch"/>
 
 
   <!-- LOCALIZATION AND MAP -->
