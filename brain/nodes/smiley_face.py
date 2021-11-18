@@ -108,7 +108,7 @@ class BRAIN():
 
     """ INIT    """
     def __init__(self):
-        rospy.init_node('brain',anonymous=True,log_level=rospy.DEBUG)
+        rospy.init_node('brain',anonymous=False,log_level=rospy.INFO)
         rospy.on_shutdown(self.shutdown)
         rospy.loginfo("Initiating smiley face NODE")
 
@@ -125,6 +125,7 @@ class BRAIN():
             "HEAT":self.heat,
             "GOTO":self.goto,
             "FILL":self.refill,
+            "SLEEP_ARM":self.set_sleep_arm,
             "INF" :self.repeat,
             "END":rospy.signal_shutdown
             }
@@ -139,8 +140,12 @@ class BRAIN():
         self.heater_mode(False)
 
         
-    def idle(self,null):
+    def idle(self,ask):
         response = 'n'
+
+        if(not ask):
+            time.sleep(2)
+            response = 'y'
 
         if(self.debug_mode):
             response = 'y'
@@ -148,7 +153,11 @@ class BRAIN():
         while(response!='y'):
             response = input("STOP IDLE MODE ? ")
         
-        
+    def set_sleep_arm(self,null):
+        rospy.loginfo("STATE --> SET ARM TO SLEEP")
+        if(not self.debug_mode):
+            self.arm_sleep()
+
     def heat(self,mode):
         if(mode):
             rospy.loginfo("STATE --> SET HEATING PLATE ON")
@@ -187,7 +196,7 @@ class BRAIN():
             rospy.loginfo(f"DO YOU WANT TO REPEAT STATE {FLOW[self.id-1][0]} ? ")
             response = input("yes or no ? ")
         else:
-            response = 'y'
+            response = 'n'
 
         if(response =='y' or response =='yes' or response==""):
             rospy.loginfo(f"REPEAT STATE {FLOW[self.id-1][0]} ")
@@ -197,18 +206,20 @@ class BRAIN():
             return
             
         rospy.loginfo("wrong input repeat --> ")
-        self.repeat(null = 0)
+        self.repeat(ask)
         
+    def done(self):
+        if(len(FLOW)<=self.id):
+            return True
+        else:
+            return False
 
     def execute_state(self):
         rospy.loginfo(f"STATE --> {self.current_state} --> START")
-        time.sleep(0.1)
         self.STATES[self.current_state](self.command)
         rospy.loginfo(f"STATE --> {self.current_state} --> DONE")
-        time.sleep(0.1)
         rospy.loginfo("-----------------")
         rospy.loginfo("")
-        time.sleep(0.1)
     
     def print_next_state(self):
         if(len(FLOW)>self.id + 1):
@@ -241,6 +252,17 @@ class BRAIN():
         except rospy.ServiceException as e:
             rospy.logerr("BRAIN --> Service call failed: %s"%e)
 
+    """
+    call service to set arm on sleep position
+    """
+    def arm_sleep(self):
+        rospy.wait_for_service("/px100/go_to_sleep")
+        try:
+            call_srv = rospy.ServiceProxy("/px100/go_to_sleep", Empty)
+            resp1 = call_srv()
+            rospy.loginfo("BRAIN  --> SET PX100 TO SLEEP ")
+        except rospy.ServiceException as e:
+            rospy.logerr("BRAIN  --> Service call failed: %s"%e)
 
     """
     call refilling of candles, ACTIVATE ARM
@@ -277,9 +299,13 @@ def start():
     
     # main loop
     while not rospy.is_shutdown():
+        if(brain_node.done()):
+            break
+        
         brain_node.execute_state()
         brain_node.print_next_state()
         brain_node.next_state()
+
         rate.sleep()
             
 """  MAIN    """
