@@ -12,7 +12,7 @@ from std_msgs.msg import ColorRGBA
 from nav_msgs.msg import Path
 from std_srvs.srv import SetBool,SetBoolResponse
 from builder.srv import PathPlanInfo
-
+import time
 import actionlib
 import builder.msg
 import tf2_ros
@@ -177,6 +177,7 @@ class PLANNER():
                 rospy.loginfo(f"PATH PLAN --> TIME  {self.time}")
                 rospy.loginfo(f"PATH PLAN --> POINT {self.huntPT.x:.2f},{self.huntPT.y:.2f}")
                 rospy.loginfo(f"PATH PLAN --> DIRE  {self.dir*TO_DEGREE:.2f}")
+                rospy.loginfo(f"****************************")
                 
                 self.next_hp()
 
@@ -185,6 +186,11 @@ class PLANNER():
                 self.publish_visualize()    
                 self.publish_huntTF()
                 self.publish_plan()
+
+                # security for publishing target TF before calling action                
+                time.sleep(1.002)
+                self.publish_huntTF()
+
 
                 # Creates a goal to send to the action server.
                 goal = self.plan.get_goal(self.time)
@@ -215,7 +221,6 @@ class PLANNER():
             # rospy.loginfo("HUNTING ACTION STATUS --> LOST")
             return True
         else:
-            rospy.logerr(f"HUNTING ACTION STATUS --> ERROR {goalID}")
             rospy.logerr(f"HUNTING ACTION STATUS --> ERROR {goalID}")
 
         return False
@@ -324,9 +329,8 @@ class PLANNER():
     """
     def publish_visualize(self):
 
-        if(len(self.markerArray.markers)>50):
-            self.markerArray.markers = []
-            self.markerArray.markers.append(Marker)
+        if(len(self.markerArray.markers)>200):
+            self.markerArray.markers.pop()
 
         # add arrow at hunt point
         col = COLOR_Blue
