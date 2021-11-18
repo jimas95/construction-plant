@@ -16,13 +16,19 @@
   <include file="$(find builder)/launch/launch_builder.launch">
     <arg name="use_fake"           value="$(arg use_fake)"/>
     <arg name="use_real"           value="$(arg use_real)"/>
-    <arg name="use_navi"           value="false"/>
+    <arg name="use_navi"           value="true"/>
+    <arg name="use_loca"           value="true"/>
     <arg name="open_rviz"          value="false"/>
   </include>
 
 
   <!-- Use BRAIN NODE -->
   <!-- <node pkg="brain" type="smiley_face.py" name="brain"     output="screen"/> -->
+
+  <!-- Use BRAIN NODE -->
+  <node pkg="brain" type="kill_all.py" name="kill_all"     output="screen"/>
+
+
 
   <node type="rviz" name="rviz" pkg="rviz" args="-d $(find brain)/rviz/allTogether.rviz" />
   <!-- <node type="rviz" name="rviz" pkg="rviz" args="-d $(find brain)/config/slam_toolbox_default.rviz" /> -->

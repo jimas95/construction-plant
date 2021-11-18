@@ -158,6 +158,7 @@ include_directories(
 catkin_install_python(PROGRAMS
   nodes/smiley_face.py
   nodes/test_line.py
+  nodes/kill_all.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
