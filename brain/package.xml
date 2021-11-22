@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>brain</name>
-  <version>0.0.0</version>
+  <version>0.0.2</version>
   <description>FSM for builder and px100 arm</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
@@ -50,6 +50,12 @@
   <!--   <test_depend>gtest</test_depend> -->
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
+  <build_depend>message_generation</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>rospy</build_depend>
+  <exec_depend>std_msgs</exec_depend>
+    <build_export_depend>message_runtime</build_export_depend>
+  <build_export_depend>std_msgs</build_export_depend>
   <buildtool_depend>catkin</buildtool_depend>
 
 
