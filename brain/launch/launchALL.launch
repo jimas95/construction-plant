@@ -27,6 +27,8 @@
 
   <!-- Use BRAIN NODE -->
   <node pkg="brain" type="kill_all.py" name="kill_all"     output="screen"/>
+  <node pkg="brain" type="time_managments.py" name="time_managment"     output="screen"/>
+  <node pkg="brain" type="ramp.py" name="brain_mode"     output="screen"/>
 
 
 
