@@ -20,18 +20,18 @@ Set coolling or printing mode, and where to go print and when to go for refill
 """
 
 
-plan_line_1 = [
+
+plan_the_line = [
     # ("IDLE","NULL"),
     ("GOTO",["prep_1" ,True]),
-    ("GOTO",["cent_1" ,True]),
+    ("GOTO",["cent_1" ,False]),
     ("HEAT",True),
-    ("GOTO",["line_1"   ,True]),
+    ("GOTO",["line_1" ,True]),
     ("INF",False),
     ("HEAT",False),
-    ("GOTO",["prep_1" ,False]),
-    ("GOTO",["cool_1"   ,True]),
+    ("GOTO",["line_1" ,True]),
     ("INF",False),
-    ("GOTO",["prep_1",False]),
+    ("GOTO",["prep_2",True]),
     ("GOTO",["PREFILL",False]),
     ("IDLE","NULL"),
     ("INF",False),
@@ -39,25 +39,6 @@ plan_line_1 = [
 ]
 
 
-
-
-plan_line_2 = [
-    # ("IDLE","NULL"),
-    ("GOTO",["prep_2" ,True]),
-    ("GOTO",["cent_2" ,True]),
-    ("HEAT",True),
-    ("GOTO",["line_2"   ,True]),
-    ("INF",False),
-    ("HEAT",False),
-    ("GOTO",["prep_2" ,False]),
-    ("GOTO",["cool_2"   ,True]),
-    ("INF",False),
-    ("GOTO",["prep_2",False]),
-    ("GOTO",["PREFILL",False]),
-    ("IDLE","NULL"),
-    ("INF",False),
-    ("END","NULL")
-]
 
 plan_refill = [
     # ("IDLE","NULL"),
@@ -80,22 +61,31 @@ plan_IDLE = [
 # WIDTH OF WHEELS       --> 0.16
 # LENGTH OFFSET OF FUNS --> 0.35
 
+MARGIN_MAX = 0.22
+MARGIN_MIN = 0.05
+
 GOTO_POS = {
 # refill points
 "REFILL":   builder.msg.PathPlanInfoGoal(centerX = 0.402, centerY = -0.02  , reverse=True ,range = 0.0  , init_time = 1   , step_size = 1.0, mode = "POINT",  direction = 0  , printMD = 0),
 "PREFILL":  builder.msg.PathPlanInfoGoal(centerX = 0.5  , centerY = -0.02  , reverse=True ,range = 0.0  , init_time = 1   , step_size = 1.0, mode = "POINT",  direction = 0  , printMD = 0),
 
-# line one
-"line_1": builder.msg.PathPlanInfoGoal(centerX = 1.5  , centerY =  0.0   , reverse=True ,range = 0.2  , init_time = 0   , step_size = 20  , mode = "LINE",   direction = 0  , printMD = 0),
-"cool_1": builder.msg.PathPlanInfoGoal(centerX = 1.15 , centerY =  0.0   , reverse=True ,range = 0.2  , init_time = 0   , step_size = 20  , mode = "LINE",   direction = 0  , printMD = 0),
-"cent_1": builder.msg.PathPlanInfoGoal(centerX = 1.5  , centerY =  0.0   , reverse=True ,range = 0.0  , init_time = 1   , step_size = 1.0 , mode = "POINT",  direction = 0  , printMD = 0),
-"prep_1": builder.msg.PathPlanInfoGoal(centerX = 1.0  , centerY =  0.0   , reverse=True ,range = 0.0  , init_time = 1   , step_size = 1.0 , mode = "POINT",  direction = 0  , printMD = 0),
 
-# line two
-"line_2": builder.msg.PathPlanInfoGoal(centerX = 1.5  , centerY =  0.158  , reverse=True ,range = 0.2  , init_time = 0   , step_size = 20  , mode = "LINE",   direction = 0  , printMD = 0),
-"cool_2": builder.msg.PathPlanInfoGoal(centerX = 1.15 , centerY =  0.158  , reverse=True ,range = 0.2  , init_time = 0   , step_size = 20  , mode = "LINE",   direction = 0  , printMD = 0),
-"cent_2": builder.msg.PathPlanInfoGoal(centerX = 1.5  , centerY =  0.158  , reverse=True ,range = 0.0  , init_time = 1   , step_size = 1.0 , mode = "POINT",  direction = 0  , printMD = 0),
-"prep_2": builder.msg.PathPlanInfoGoal(centerX = 1.0  , centerY =  0.158  , reverse=True ,range = 0.0  , init_time = 1   , step_size = 1.0 , mode = "POINT",  direction = 0  , printMD = 0)
+# line one
+# "line_1": builder.msg.PathPlanInfoGoal(centerX = 1.44 , centerY =  0.18  , reverse=True ,range = 0.1  , init_time = 0   , step_size = 20  , mode = "LINE",   direction = 0  , printMD = 0),
+"cent_1": builder.msg.PathPlanInfoGoal(centerX = 1.4  , centerY =  0.15  , reverse=True ,range = 0.0  , init_time = 1   , step_size = 1.0 , mode = "POINT",   direction = pi , printMD = 0),
+"prep_1": builder.msg.PathPlanInfoGoal(centerX = 0.75 , centerY =  0.15  , reverse=True ,range = 0.0  , init_time = 1   , step_size = 1.0 , mode = "POINT",   direction = 0  , printMD = 0),
+"prep_2": builder.msg.PathPlanInfoGoal(centerX = 0.75 , centerY =  0.15  , reverse=True ,range = 0.0  , init_time = 1   , step_size = 1.0 , mode = "POINT",   direction = pi , printMD = 0),
+
+
+
+"line_1"  : builder.msg.PathPlanInfoGoal(centerX = 1.45 , centerY =  0.13  , reverse=True ,range = 0.2  , init_time = 0   , step_size = 20  , mode = "LINE",   direction = 0  , printMD = 0),
+"line_w11": builder.msg.PathPlanInfoGoal(centerX = 1.41 , centerY =  0.16 , reverse=True ,range = 0.12  , init_time = 0   , step_size = 20  , mode = "LINE",   direction = 0  , printMD = 0),
+"line_w12": builder.msg.PathPlanInfoGoal(centerX = 1.41 , centerY =  0.185 , reverse=True ,range = 0.12  , init_time = 0   , step_size = 20  , mode = "LINE",   direction = 0  , printMD = 0),
+"line_w21": builder.msg.PathPlanInfoGoal(centerX = 1.41 , centerY =  0.075  , reverse=True ,range = 0.12  , init_time = 0   , step_size = 20  , mode = "LINE",   direction = 0  , printMD = 0),
+"line_w22": builder.msg.PathPlanInfoGoal(centerX = 1.41 , centerY =  0.045  , reverse=True ,range = 0.12  , init_time = 0   , step_size = 20  , mode = "LINE",   direction = 0  , printMD = 0),
+
+
+
 
 }
 
@@ -116,9 +106,12 @@ class BRAIN():
         self.infinity_mode = True
         self.new_plan = False
         self.id = 0 
-        self.current_plan = plan_IDLE
+        self.current_plan = plan_the_line
         self.new_name = "None"
-        
+        self.prosimo = 1
+        # self.prosimo = False
+        self.goto_name = "line_w1"
+
         self.STATES = {
             "START":self.start,
             "IDLE":self.idle,
@@ -142,7 +135,7 @@ class BRAIN():
 
         
     def idle(self,null):
-        time.sleep(0.5)
+        time.sleep(0.05)
         
 
     """
@@ -151,6 +144,9 @@ class BRAIN():
     input[1] --> if reverse mode is on (boolean)
     """
     def goto(self,input):
+
+        self.update_ramp() # switch line Y position
+
         gowhere = input[0]
         plan = copy.deepcopy(GOTO_POS[gowhere])
         plan.reverse = input[1] 
@@ -175,7 +171,23 @@ class BRAIN():
         if(self.infinity_mode):
             rospy.loginfo(f"REPEAT STATE {self.current_plan[self.id-1][0]} ")
             self.id = self.id - 2
+            
         self.infinity_mode = True
+
+
+    def update_ramp(self):
+        if(GOTO_POS["line_1"].centerY>MARGIN_MAX):
+            self.prosimo = -1
+
+
+        if(GOTO_POS["line_1"].centerY<MARGIN_MIN):
+            self.prosimo = 1
+
+        GOTO_POS["line_1"].centerY = GOTO_POS["line_1"].centerY + self.prosimo*0.03
+
+        plan_the_line[3] = ("GOTO",["line_1",True])
+
+
 
     def execute_state(self):
         rospy.loginfo(f"STATE --> {self.current_state} --> START")
@@ -199,7 +211,6 @@ class BRAIN():
     def shutdown(self):
         rospy.logerr("BRAIN --> SHUT DOWN")
 
-
     ############################  SERVICES ############################
     """
     control service for setting modes
@@ -209,10 +220,17 @@ class BRAIN():
         msg_response = myStringResponse()
         self.new_plan = True
         self.new_name = plan
-        if(plan=="l1"):
-            msg_response.msg =  "Set Plan --> plan line 1"
+        if(plan=="ll"):
+            self.goto_name = "line_1"
+            msg_response.msg =  "Set Plan --> plan line " + self.goto_name
+        elif(plan=="l1"):
+            self.goto_name = "line_w1"
+            msg_response.msg =  "Set Plan --> plan line " + self.goto_name
+            self.new_name = "ll"
         elif(plan=="l2"):
-            msg_response.msg =  "Set Plan --> plan line 2"
+            self.goto_name = "line_w2"
+            msg_response.msg =  "Set Plan --> plan line " + self.goto_name
+            self.new_name = "ll"
         elif(plan=="refill"):
             msg_response.msg =  "Set Plan --> plan refill"
         elif(plan=="next"):
@@ -225,11 +243,8 @@ class BRAIN():
 
 
     def update_plan(self):
-        if(self.new_name=="l1"):
-            self.current_plan = plan_line_1
-            self.id = 0
-        elif(self.new_name=="l2"):
-            self.current_plan = plan_line_2
+        if(self.new_name=="ll"):
+            self.current_plan = plan_the_line
             self.id = 0
         elif(self.new_name=="refill"):
             self.current_plan = plan_refill

@@ -76,22 +76,6 @@ FLOW = [
     ("END","NULL")]
 
 
-FLOW = [
-    # print mouth
-    # ("GOTO" ,["PREFILL" ,False]),
-    # ("GOTO" ,["REFILL" ,False]),
-    # ("FILL","NULL"),
-    # ("GOTO",["PREPRINT",True]),
-    ("GOTO",["CENMOUTH" ,True]),
-    # ("HEAT",True),
-    ("GOTO",["MOUTH"   ,True]),
-    ("INF",False),
-    # ("HEAT",False),
-    # ("GOTO",["MOUTH"   ,True]),
-    # ("INF",False),
-    # ("IDLE","NULL"),
-    ("GOTO",["PREPRINT",False])]
-
 GOTO_POS = {
 "REFILL":   builder.msg.PathPlanInfoGoal(centerX = 0.402, centerY = -0.02  , reverse=True ,range = 0.0  , init_time = 1   , step_size = 1.0, mode = "POINT",  direction = 0  , printMD = 0),
 "PREFILL":  builder.msg.PathPlanInfoGoal(centerX = 0.5  , centerY = -0.02  , reverse=True ,range = 0.0  , init_time = 1   , step_size = 1.0, mode = "POINT",  direction = 0  , printMD = 0),
