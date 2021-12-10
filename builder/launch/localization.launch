@@ -24,12 +24,12 @@
   <!-- SLAM_TOOLBOX -->
   <!-- latest MAP FILE :  xartis_LANDMARK-->
   <!-- <node pkg="slam_toolbox" type="async_slam_toolbox_node" name="slam_toolbox" output="screen">
-    <rosparam command="load" file="$(find brain)/config/mapper_params_online_async.yaml" />
+    <rosparam command="load" file="$(find builder)/config/mapper_params_online_async.yaml" />
   </node> -->
   
   <!-- SLAM_TOOLBOX -->
   <!-- <node pkg="slam_toolbox" type="localization_slam_toolbox_node" name="slam_toolbox" output="screen">
-    <rosparam command="load" file="$(find brain)/config/mapper_params_localization.yaml" />
+    <rosparam command="load" file="$(find builder)/config/mapper_params_localization.yaml" />
   </node> -->
 
   <!-- move_base -->
