@@ -71,8 +71,13 @@ class TIME_MANAGMENT():
 
 """ INIT smiley face   """
 def start():
-    cycle_2 = (("idle",2),("refill",20),("l1",5*60),("next",1*60),("next",28),("refill",15))
-    cycle_1 = (("idle",2),("refill",20),("l2",5*60),("next",1*60),("next",28),("refill",15))
+    cycle_1 = (("idle",2),("refill",28),("l2",5.2*60),("next",40),("refill",25))
+    cycle_2 = (("idle",2),("refill",28),("l1",5.2*60),("next",40),("refill",25))
+
+    cycle_1 = (("idle",2),("l2",5.2*60),("next",30))
+    cycle_2 = (("idle",2),("l1",5.2*60),("next",30))
+
+    # cycle__ = (("idle",2),("l2",15*60),("next",1*60),("next",28),("refill",15))
     cycle_selection = True
     time_managment = TIME_MANAGMENT(cycle_1)
     rate = rospy.Rate(1) # publish freacuancy 
@@ -88,8 +93,10 @@ def start():
         if(result):
             if(cycle_selection):
                 time_managment.set_mode(cycle_2)
+                # time_managment.set_mode(cycle__)
             else:
                 time_managment.set_mode(cycle_1)
+                # time_managment.set_mode(cycle__)
             cycle_selection = not cycle_selection
 
         rate.sleep()
