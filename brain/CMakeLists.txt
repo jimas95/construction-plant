@@ -161,6 +161,8 @@ catkin_install_python(PROGRAMS
   nodes/smiley_face.py
   nodes/test_line.py
   nodes/ramp.py
+  nodes/pyramid.py
+  nodes/line.py
   nodes/kill_all.py
   nodes/time_managment.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
