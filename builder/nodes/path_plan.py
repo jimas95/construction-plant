@@ -63,9 +63,9 @@ class PLAN():
     def get_goal(self,time):
         if(self.MODE=="LINE"):
             if(time>0):
-                self.reverse = False
-            else:
                 self.reverse = True
+            else:
+                self.reverse = False
 
         return builder.msg.huntGoal(reverseMD = self.reverse, debugMD = self.debug_mode)
 
