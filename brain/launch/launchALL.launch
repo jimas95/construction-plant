@@ -2,6 +2,7 @@
 
   <arg name="use_fake"     default="false" doc ="use fake nodes"/>
   <arg name="use_real"     default="false" doc ="use real robots!"/>
+  <arg name="use_loca"     default="true" doc ="use localization for robot!"/>
 
   <param name="debug_mode" value="false" />
   <!-- <param name="debug_mode" value="True" /> -->
@@ -17,7 +18,7 @@
     <arg name="use_fake"           value="$(arg use_fake)"/>
     <arg name="use_real"           value="$(arg use_real)"/>
     <arg name="use_navi"           value="true"/>
-    <arg name="use_loca"           value="true"/>
+    <arg name="use_loca"           value="$(arg use_loca)"/>
     <arg name="open_rviz"          value="false"/>
   </include>
 
@@ -27,8 +28,8 @@
 
   <!-- Use BRAIN NODE -->
   <node pkg="brain" type="kill_all.py" name="kill_all"     output="screen"/>
-  <node pkg="brain" type="time_managments.py" name="time_managment"     output="screen"/>
-  <node pkg="brain" type="ramp.py" name="brain_mode"     output="screen"/>
+  <!-- <node pkg="brain" type="time_managment.py" name="time_managment"     output="screen"/> -->
+  <!-- <node pkg="brain" type="ramp.py" name="brain_mode"     output="screen"/> -->
 
 
 
