@@ -19,5 +19,3 @@ Either set use_real or use_fake to true. But one of them must be true. Additiona
 2. 'roslaunch brain launch_launAll.launch use_gazebo:= True'
 3. 'roslaunch brain launch_launAll.launch use_fake:= True use_loca:=False'
 
-# Map the environment
-If you want to map a new environment you need to edit the localization.launch file and either select slam_toolbox or gmaping.
