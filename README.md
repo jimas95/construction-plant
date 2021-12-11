@@ -17,4 +17,4 @@ Three main packages exists. one for each robot (turtlebot,PX100) and an addition
 For additional information about each package and how to execute the project see the README of each package.
 
 ## Instalation
-
+read INSTALL.md

@@ -19,8 +19,8 @@ Either set use_real, use_gazebo or use_fake to true. But one of them must be tru
 
 # Examples of launch file 
 1. 'roslaunch builder launch_bring_up.launch use_real:= True'
-1. 'roslaunch builder launch_bring_up.launch use_gazebo:= True'
-1. 'roslaunch builder launch_bring_up.launch use_fake:= True use_loca:=False'
+2. 'roslaunch builder launch_bring_up.launch use_gazebo:= True'
+3. 'roslaunch builder launch_bring_up.launch use_fake:= True use_loca:=False'
 
 # Map the environment
 If you want to map a new environment you need to edit the localization.launch file and either select slam_toolbox or gmaping.

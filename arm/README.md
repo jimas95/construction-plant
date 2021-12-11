@@ -3,7 +3,7 @@
 
 ## Package ARM
 
-The purpose is to control the robot px100, Meanwhile the TurtleBuilder if free to navigate around it. pathplaning, obstacle avoidance, grasping a specific object and finaly having the ability to 'refuel' the TurtleBuilder are some of the main objectives of this package.
+The purpose is to control the robot px100, Meanwhile the TurtleBuilder is free to navigate around it. path planing, obstacle avoidance, grasping a specific object and finaly having the ability to 'refuel' the TurtleBuilder are some of the main objectives of this package.
 
 
 # Set Up
@@ -11,12 +11,9 @@ using MoveIt Python API.
 The project is heavily dependent on MoveIt & interbotix packages. [link to intebotix git](https://github.com/Interbotix)
 
 # Nodes
-1. PICK_AND_PLACE
-2. CANDLE
-3. SCENE
-
-
-## main services 
+1. PICK_AND_PLACE --> main Moveit node 
+2. CANDLE --> creates the waypoint for pick and place
+3. SCENE --> creates the scene for Moveit
 
 
 
@@ -29,13 +26,8 @@ One main launch file exists that calls everything we need.
 
 
 
-
-## Tests
-
-
-
 # Robot control 
-
+One main service is used `rosservice call /px100/refill`, the service will execute a pick and place. The pick and place positions are defined in yaml files under folder 'config/', and are defined at polar coordinates. These values are being read from the parameter server dynamically for tunning purposes. 
 
 
 
